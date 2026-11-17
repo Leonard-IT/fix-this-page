@@ -8,22 +8,93 @@ This is the overlay of [fixthis.page](https://fixthis.page), which does the same
 
 ## Add it to your site
 
-Include the loader with a `<script>` tag. That is the only supported way for now; importing the package in a bundler does not work, because the loader finds the rest of the overlay next to its own `src`.
+You add one `<script>` tag to your pages. Pick the option that fits; they all end the same way.
 
-From jsDelivr, pinned to a version:
+The overlay is two files that belong together: `fixthis.js` (the small loader your pages include) and `fixthis-overlay.js` (the full overlay, which the loader fetches the first time it is switched on). The loader looks for the overlay **in the same folder as itself**, and it checks the overlay against a hash made in the same build. So always put both files in one folder, and always take both from the same version.
+
+### Option A: from a CDN (least work)
 
 ```html
 <script src="https://cdn.jsdelivr.net/npm/fix-this-page@0.1.0/dist/fixthis.js"
         integrity="sha384-…" crossorigin="anonymous"></script>
 ```
 
-Use the full path to `dist/fixthis.js`, not the short `…/npm/fix-this-page@0.1.0` URL: the loader looks for `fixthis-overlay.js` in the same folder as its own address. Take the `integrity` value from the jsDelivr page of the version you use.
+Use the full path to `dist/fixthis.js`, not the short `…/npm/fix-this-page@0.1.0` URL. Take the `integrity` value from the jsDelivr page of the version you use.
 
-Or host the files yourself: copy `dist/fixthis.js` and `dist/fixthis-overlay.js` from the package into the same folder on your site, and include the first:
+### Option B: copy the files from the npm package
+
+```bash
+npm install fix-this-page
+```
+
+Copy `node_modules/fix-this-page/dist/fixthis.js` and `node_modules/fix-this-page/dist/fixthis-overlay.js` into the folder your site serves as static files (see [Where the files go](#where-the-files-go)), then add the tag from [Add the tag](#add-the-tag).
+
+### Option C: build it yourself from this repository
+
+Use this to run a modified version, or when you do not want npm or a CDN. You need [Git](https://git-scm.com) and [Node.js](https://nodejs.org) 22 or newer.
+
+1. Get the code and build it:
+
+   ```bash
+   git clone https://github.com/Leonard-IT/fix-this-page.git
+   cd fix-this-page
+   npm ci
+   npm run build
+   ```
+
+   The build writes four files to `packages/fix-this-page/dist/`. You need the two that end in `.js`; the `.map` files are only for debugging.
+
+2. Copy the two `.js` files into your project. Replace `/path/to/your-project/public` with the folder your site serves as static files (see below):
+
+   ```bash
+   # macOS, Linux, Git Bash
+   cp packages/fix-this-page/dist/fixthis*.js /path/to/your-project/public/
+   ```
+
+   ```powershell
+   # Windows PowerShell
+   Copy-Item packagesix-this-pagedistixthis*.js C:path	oyour-projectpublic   ```
+
+3. Add the tag (below). Commit the two copied files to **your** project, not to this repository: `dist/` is ignored here.
+
+To update later, build the new version and replace **both** files.
+
+### Where the files go
+
+Put them in the folder your site serves as-is, so that `https://your-site.example/fixthis.js` opens the script in a browser:
+
+| Your site is… | Folder |
+| --- | --- |
+| Plain HTML | Next to `index.html` |
+| Vite, Next.js, Astro, SvelteKit, Laravel, Rails | `public/` (`static/` in SvelteKit) |
+| Anything else | The folder your web server or host publishes; if `/fixthis.js` shows a 404 page, it is the wrong folder |
+
+You may use a subfolder, such as `/tools/`, if the tag points there. Keep both files in it.
+
+### Add the tag
+
+Add it to every page where feedback should be possible, in the `<head>` or just before `</body>`:
 
 ```html
 <script src="/fixthis.js"></script>
 ```
+
+Use a plain script tag: no `type="module"`, and keep the file name `fixthis.js`. In a framework, put the tag in the shared layout or the root HTML template (`index.html`, `layout`, `_document`, …), and make sure it is not removed in production builds.
+
+### Check that it works
+
+1. Open your page with `?fix` added to the address, for example `http://localhost:3000/?fix`.
+2. A small panel (the dock) appears on the page. Click any element to comment on it or change it.
+
+Nothing happens? Open the browser's developer tools and look at the Network and Console tabs:
+
+| You see | Cause and fix |
+| --- | --- |
+| `fixthis.js` is a 404 | The file is not in the folder your site serves, or the `src` in the tag is wrong. |
+| Console: `fixthis: could not load …/fixthis-overlay.js`, and in the Network tab that file is a 404 | It is not in the same folder as `fixthis.js`. Copy both files together. |
+| The same console message, but the file loads (status 200) and the browser reports an `integrity` problem | The two files come from different builds, or a host changed the file. Replace both with files from one build. |
+| A message about Content Security Policy | Allow both files in `script-src` (see below). |
+| Nothing in either tab | The tag is not on this page, or a cached page was served; reload without cache. |
 
 ### What it costs your visitors
 
@@ -64,16 +135,9 @@ The prompt holds the items of all pages, each with what to find (selector, HTML 
 
 An imported feedback file or an opened share link is untrusted input. A link asks before it shows anything, and one that would unpack to more than 1 MB is refused. The overlay only applies text changes and changes to `href`, `src`, `alt` and `title`, and refuses links that start with `javascript:`, `vbscript:` or `data:`. Please report vulnerabilities privately, as described in `SECURITY.md` in the repository.
 
-## Build from source
+## Develop
 
-From the repository root, after `npm install`:
-
-```bash
-npm run build:overlay   # writes packages/fix-this-page/dist/
-npm test
-```
-
-Try it with [examples/demo.html](examples/demo.html): serve this folder (for example `npx serve .`) and open `/examples/demo.html?fix`.
+See [CONTRIBUTING.md](../../CONTRIBUTING.md) in the repository root. Try your build with [examples/demo.html](examples/demo.html): serve this folder (for example `npx serve .`) and open `/examples/demo.html?fix`.
 
 ## License
 
