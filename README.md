@@ -1,6 +1,6 @@
 # fix-this-page
 
-Let people give feedback on your website by pointing at things and changing them directly: comment on an element, edit its text, change a link, duplicate a block or mark it for deletion. You get the result as a prompt for your AI coding agent.
+Let people give feedback on your website by pointing at things and changing them directly: comment on an element, edit its text, change a link, duplicate or move a block, or mark it for deletion. You get the result as a prompt for your AI coding agent.
 
 It is one script you add to your own site. It stays out of the way until someone opens a page with `?fix` in the address, and nothing is sent anywhere: the feedback stays in the browser of whoever gives it, until they copy a link, copy the prompt or save a file.
 

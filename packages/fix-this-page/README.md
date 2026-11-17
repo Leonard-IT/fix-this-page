@@ -1,6 +1,6 @@
 # fix-this-page
 
-Let people give feedback on your site by pointing at things and changing them directly: comment on an element, edit its text, change a link, duplicate a block or mark it for deletion. You get the result as a prompt for your AI coding agent.
+Let people give feedback on your site by pointing at things and changing them directly: comment on an element, edit its text, change a link, duplicate or move a block, or mark it for deletion. You get the result as a prompt for your AI coding agent.
 
 It runs on your own pages, in development and on the live site, and stays out of the way until someone adds `?fix` to the address. Nothing is sent anywhere: the feedback stays in the browser of whoever gives it.
 
@@ -53,7 +53,8 @@ Use this to run a modified version, or when you do not want npm or a CDN. You ne
 
    ```powershell
    # Windows PowerShell
-   Copy-Item packagesix-this-pagedistixthis*.js C:path	oyour-projectpublic   ```
+   Copy-Item packages/fix-this-page/dist/fixthis*.js C:/path/to/your-project/public/
+   ```
 
 3. Add the tag (below). Commit the two copied files to **your** project, not to this repository: `dist/` is ignored here.
 
@@ -81,6 +82,22 @@ Add it to every page where feedback should be possible, in the `<head>` or just 
 
 Use a plain script tag: no `type="module"`, and keep the file name `fixthis.js`. In a framework, put the tag in the shared layout or the root HTML template (`index.html`, `layout`, `_document`, …), and make sure it is not removed in production builds.
 
+### Run your site locally with npx
+
+Opening `index.html` by double-clicking it (a `file://` address) does not work: the browser blocks the loader from fetching the overlay. Serve the folder over HTTP instead. If you have Node.js, you already have `npx`, and this is the simplest way:
+
+1. Open a terminal in the folder your site serves (the one that holds `index.html` and the two `.js` files).
+2. Run:
+
+   ```bash
+   npx serve .
+   ```
+
+3. The first time you run it, npx asks `Need to install the following packages: serve. Ok to proceed? (y)`. Type `y` and press Enter. It downloads `serve` once, so you need an internet connection for that step; after that it starts quickly. Add `--yes` (`npx --yes serve .`) to skip the question.
+4. Open the address it prints, usually `http://localhost:3000`, and add `?fix` to it (see below).
+
+Stop the server with Ctrl+C. If port 3000 is taken, `serve` picks another and prints it.
+
 ### Check that it works
 
 1. Open your page with `?fix` added to the address, for example `http://localhost:3000/?fix`.
@@ -105,7 +122,7 @@ Under a Content Security Policy, `script-src` must allow both files. The overlay
 ## Give feedback
 
 1. Open any page of the site with `?fix` added to the address, for example `https://example.com/pricing?fix`. The overlay then stays on in that browser tab, also on other pages, until it is closed with the close button in its dock.
-2. Click anything on the page to comment on it, edit its text, change a link, duplicate it or mark it for deletion. Clicks go to the overlay while it is on, so links and buttons of the site do nothing.
+2. Click anything on the page to comment on it, edit its text, change a link, duplicate it, move it or mark it for deletion. Clicks go to the overlay while it is on, so links and buttons of the site do nothing.
 3. Send the feedback to the developer: **Copy link** gives a link that carries the feedback, to paste into any chat or email. **Save as a file** gives a file the developer can open with **Open a file** in their own browser, also on a development site. **Copy for an AI tool** gives the prompt for an AI coding agent.
 
 The exported file is a [Page Change Format](../../spec/page-change-format.md) (PCF) 0.1 document, named after the site and the time, such as `example.com-2026-11-13-1432.pagechange.json`: an open JSON format for requested changes to a web page, so other tools can read it. Import reads PCF documents and files from earlier versions of the overlay. Items are matched to pages by path, not by host. Items the overlay cannot show, such as an item type from a later PCF version, are skipped and counted.
@@ -142,3 +159,5 @@ See [CONTRIBUTING.md](../../CONTRIBUTING.md) in the repository root. Try your bu
 ## License
 
 MIT
+Copy-Item packages/fix-this-page/dist/fixthis*.js C:/path/to/your-project/public/
+   ```
