@@ -1,0 +1,19 @@
+{
+  "description": "PCF 0.1 has three item types",
+  "invalidAt": "/items/0/type",
+  "document": {
+    "format": "page-change-format",
+    "version": "0.1",
+    "items": [
+      {
+        "id": "a1",
+        "type": "move",
+        "target": {
+          "url": "https://example.com/about"
+        },
+        "comment": "Make this page shorter.",
+        "status": "open"
+      }
+    ]
+  }
+}

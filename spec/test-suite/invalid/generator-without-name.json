@@ -1,0 +1,12 @@
+{
+  "description": "A generator has a name",
+  "invalidAt": "/generator/name",
+  "document": {
+    "format": "page-change-format",
+    "version": "0.1",
+    "generator": {
+      "version": "1.0"
+    },
+    "items": []
+  }
+}

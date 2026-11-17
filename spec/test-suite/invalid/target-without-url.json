@@ -1,0 +1,19 @@
+{
+  "description": "Every target has a url",
+  "invalidAt": "/items/0/target/url",
+  "document": {
+    "format": "page-change-format",
+    "version": "0.1",
+    "items": [
+      {
+        "id": "a1",
+        "type": "edit",
+        "target": {
+          "text": "About us"
+        },
+        "comment": "Shorter.",
+        "status": "open"
+      }
+    ]
+  }
+}

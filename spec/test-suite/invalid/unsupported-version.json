@@ -1,0 +1,9 @@
+{
+  "description": "A version this schema does not describe",
+  "invalidAt": "/version",
+  "document": {
+    "format": "page-change-format",
+    "version": "1.0",
+    "items": []
+  }
+}

@@ -1,0 +1,26 @@
+{
+  "description": "PCF 0.1 defines only CssSelector",
+  "invalidAt": "/items/0/target/selector/0/type",
+  "document": {
+    "format": "page-change-format",
+    "version": "0.1",
+    "items": [
+      {
+        "id": "a1",
+        "type": "edit",
+        "target": {
+          "url": "https://example.com/about",
+          "selector": [
+            {
+              "type": "XPathSelector",
+              "value": "//h1"
+            }
+          ],
+          "text": "About us"
+        },
+        "comment": "Shorter.",
+        "status": "open"
+      }
+    ]
+  }
+}

@@ -1,0 +1,15 @@
+{
+  "name": "fix-this-page-repo",
+  "private": true,
+  "description": "Source of the fix-this-page overlay and the Page Change Format specification.",
+  "license": "MIT",
+  "workspaces": ["packages/*"],
+  "scripts": {
+    "build": "npm run build --workspace fix-this-page",
+    "test": "node --test \"packages/*/test/*.test.js\" \"packages/*/test/core/*.test.js\" \"packages/*/test/core/annotator/*.test.js\" \"spec/validator/*.test.js\"",
+    "validate": "node spec/validator/validate.js"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}

@@ -1,0 +1,20 @@
+{
+  "description": "The author is an object with a name",
+  "invalidAt": "/items/0/author",
+  "document": {
+    "format": "page-change-format",
+    "version": "0.1",
+    "items": [
+      {
+        "id": "a1",
+        "type": "edit",
+        "target": {
+          "url": "https://example.com/about"
+        },
+        "comment": "Make this page shorter.",
+        "status": "open",
+        "author": "Anna"
+      }
+    ]
+  }
+}

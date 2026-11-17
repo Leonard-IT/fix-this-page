@@ -1,0 +1,23 @@
+{
+  "format": "page-change-format",
+  "version": "0.1",
+  "items": [
+    {
+      "id": "Tz9c",
+      "number": 5,
+      "type": "edit",
+      "target": {
+        "url": "https://bakery.example/about",
+        "selector": [
+          { "type": "CssSelector", "value": "main img.team" }
+        ],
+        "html": "<img class=\"team\" src=\"/img/team-2019.jpg\" alt=\"Our team\">",
+        "heading": "Who we are"
+      },
+      "comment": "This photo is old, please use the new one from the shared folder and make it a bit smaller.",
+      "author": { "name": "Mark" },
+      "created": "2026-11-10T09:30:00Z",
+      "status": "open"
+    }
+  ]
+}

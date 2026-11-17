@@ -1,0 +1,57 @@
+{
+  "description": "Extensions on the document, an item, a target and a change",
+  "document": {
+    "format": "page-change-format",
+    "version": "0.1",
+    "extensions": {
+      "page.fixthis": {
+        "callback": {
+          "method": "PATCH",
+          "url": "https://fixthis.page/api/sessions/Vq3kP0/annotations/{id}"
+        }
+      }
+    },
+    "items": [
+      {
+        "id": "a1",
+        "type": "edit",
+        "target": {
+          "url": "https://example.com/about",
+          "selector": [
+            {
+              "type": "CssSelector",
+              "value": "main h1"
+            }
+          ],
+          "text": "About us",
+          "extensions": {
+            "page.fixthis": {
+              "pageId": "p1"
+            }
+          }
+        },
+        "status": "open",
+        "changes": [
+          {
+            "type": "text",
+            "path": ".",
+            "from": "About us",
+            "to": "Who we are",
+            "extensions": {
+              "example.tool": {
+                "confidence": "high"
+              }
+            }
+          }
+        ],
+        "extensions": {
+          "page.fixthis": {
+            "report": {
+              "summary": "about.html l.3: About us → Who we are"
+            }
+          }
+        }
+      }
+    ]
+  }
+}

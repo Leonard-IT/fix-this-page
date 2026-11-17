@@ -1,0 +1,33 @@
+{
+  "description": "PCF 0.1 has text and attribute changes",
+  "invalidAt": "/items/0/changes/0/type",
+  "document": {
+    "format": "page-change-format",
+    "version": "0.1",
+    "items": [
+      {
+        "id": "a1",
+        "type": "edit",
+        "target": {
+          "url": "https://example.com/about",
+          "selector": [
+            {
+              "type": "CssSelector",
+              "value": "main h1"
+            }
+          ],
+          "text": "About us"
+        },
+        "status": "open",
+        "changes": [
+          {
+            "type": "style",
+            "path": ".",
+            "from": "About us",
+            "to": "Who we are"
+          }
+        ]
+      }
+    ]
+  }
+}

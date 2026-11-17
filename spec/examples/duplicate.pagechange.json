@@ -1,0 +1,27 @@
+{
+  "format": "page-change-format",
+  "version": "0.1",
+  "items": [
+    {
+      "id": "Bx7r",
+      "number": 3,
+      "type": "duplicate",
+      "target": {
+        "url": "https://bakery.example/menu",
+        "selector": [
+          { "type": "CssSelector", "value": "ul.products > li:nth-of-type(2)" }
+        ],
+        "html": "<li class=\"product\"><h3>Sourdough loaf</h3><p class=\"price\">€ 4.50</p></li>",
+        "text": "Sourdough loaf € 4.50",
+        "heading": "Bread"
+      },
+      "changes": [
+        { "type": "text", "path": "h3", "from": "Sourdough loaf", "to": "Spelt loaf" },
+        { "type": "text", "path": "p.price", "from": "€ 4.50", "to": "€ 5.25" }
+      ],
+      "placement": { "position": "after", "order": 1 },
+      "created": "2026-11-10T09:20:00Z",
+      "status": "open"
+    }
+  ]
+}

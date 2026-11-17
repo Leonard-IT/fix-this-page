@@ -1,0 +1,35 @@
+{
+  "description": "The change is called type, with the value attribute",
+  "invalidAt": "/items/0/changes/0/kind",
+  "document": {
+    "format": "page-change-format",
+    "version": "0.1",
+    "items": [
+      {
+        "id": "a1",
+        "type": "edit",
+        "target": {
+          "url": "https://example.com/about",
+          "selector": [
+            {
+              "type": "CssSelector",
+              "value": "main h1"
+            }
+          ],
+          "text": "About us"
+        },
+        "status": "open",
+        "changes": [
+          {
+            "type": "attribute",
+            "kind": "attr",
+            "path": ".",
+            "name": "href",
+            "from": "/a",
+            "to": "/b"
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,32 @@
+{
+  "description": "Giving an element without text a text",
+  "document": {
+    "format": "page-change-format",
+    "version": "0.1",
+    "items": [
+      {
+        "id": "a1",
+        "type": "edit",
+        "target": {
+          "url": "https://example.com/about",
+          "selector": [
+            {
+              "type": "CssSelector",
+              "value": "main h1"
+            }
+          ],
+          "text": ""
+        },
+        "status": "open",
+        "changes": [
+          {
+            "type": "text",
+            "path": ".",
+            "from": "",
+            "to": "Who we are"
+          }
+        ]
+      }
+    ]
+  }
+}

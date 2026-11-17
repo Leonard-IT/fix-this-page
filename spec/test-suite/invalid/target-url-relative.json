@@ -1,0 +1,19 @@
+{
+  "description": "The target url is absolute",
+  "invalidAt": "/items/0/target/url",
+  "document": {
+    "format": "page-change-format",
+    "version": "0.1",
+    "items": [
+      {
+        "id": "a1",
+        "type": "edit",
+        "target": {
+          "url": "/about"
+        },
+        "comment": "Make this page shorter.",
+        "status": "open"
+      }
+    ]
+  }
+}

@@ -1,0 +1,30 @@
+{
+  "description": "Item numbers are unique within the document",
+  "invalidAt": "/items/1/number",
+  "document": {
+    "format": "page-change-format",
+    "version": "0.1",
+    "items": [
+      {
+        "id": "a1",
+        "type": "edit",
+        "target": {
+          "url": "https://example.com/about"
+        },
+        "comment": "Make this page shorter.",
+        "status": "open",
+        "number": 1
+      },
+      {
+        "id": "a2",
+        "type": "edit",
+        "target": {
+          "url": "https://example.com/about"
+        },
+        "comment": "Make this page shorter.",
+        "status": "open",
+        "number": 1
+      }
+    ]
+  }
+}

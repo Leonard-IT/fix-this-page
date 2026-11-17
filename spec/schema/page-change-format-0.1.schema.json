@@ -1,0 +1,126 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Page Change Format 0.1",
+  "description": "A PCF 0.1 document (spec/page-change-format.md). Rules that a schema cannot express, such as unique item ids, are checked by spec/validator/validate.js; where the two disagree, the specification text wins.",
+  "type": "object",
+  "required": ["format", "version", "items"],
+  "properties": {
+    "$schema": { "type": "string" },
+    "format": { "const": "page-change-format" },
+    "version": { "const": "0.1" },
+    "id": { "type": "string", "minLength": 1 },
+    "created": { "$ref": "#/$defs/timestamp" },
+    "generator": { "$ref": "#/$defs/generator" },
+    "items": { "type": "array", "items": { "$ref": "#/$defs/item" } },
+    "extensions": { "$ref": "#/$defs/extensions" }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "timestamp": {
+      "$comment": "Section 1: RFC 3339 in UTC, ending in Z",
+      "type": "string",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d+)?Z$"
+    },
+    "extensions": {
+      "$comment": "Section 9: each key is a reverse domain name the producer controls",
+      "type": "object",
+      "propertyNames": { "pattern": "^[A-Za-z0-9-]+(\\.[A-Za-z0-9-]+)+$" }
+    },
+    "generator": {
+      "type": "object",
+      "required": ["name"],
+      "properties": {
+        "name": { "type": "string", "minLength": 1 },
+        "version": { "type": "string" },
+        "url": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "item": {
+      "type": "object",
+      "required": ["id", "type", "target", "status"],
+      "properties": {
+        "id": { "type": "string", "pattern": "^[A-Za-z0-9_-]{1,64}$" },
+        "number": { "type": "integer", "minimum": 1 },
+        "type": { "enum": ["edit", "duplicate", "delete"] },
+        "target": { "$ref": "#/$defs/target" },
+        "changes": { "type": "array", "items": { "$ref": "#/$defs/change" } },
+        "placement": { "$ref": "#/$defs/placement" },
+        "comment": { "type": "string" },
+        "author": {
+          "type": "object",
+          "required": ["name"],
+          "properties": { "name": { "type": "string" } },
+          "additionalProperties": false
+        },
+        "created": { "$ref": "#/$defs/timestamp" },
+        "status": { "enum": ["open", "done"] },
+        "extensions": { "$ref": "#/$defs/extensions" }
+      },
+      "additionalProperties": false
+    },
+    "target": {
+      "type": "object",
+      "required": ["url"],
+      "properties": {
+        "url": {
+          "$comment": "Section 5.2: an absolute URL, so it starts with a scheme",
+          "type": "string",
+          "pattern": "^[A-Za-z][A-Za-z0-9+.-]*:\\S+$"
+        },
+        "selector": { "type": "array", "items": { "$ref": "#/$defs/selector" } },
+        "html": { "type": "string" },
+        "text": { "type": "string" },
+        "heading": { "type": "string" },
+        "viewport": {
+          "type": "object",
+          "required": ["width", "height"],
+          "properties": {
+            "width": { "type": "number", "minimum": 0 },
+            "height": { "type": "number", "minimum": 0 }
+          },
+          "additionalProperties": false
+        },
+        "extensions": { "$ref": "#/$defs/extensions" }
+      },
+      "additionalProperties": false
+    },
+    "selector": {
+      "type": "object",
+      "required": ["type", "value"],
+      "properties": {
+        "type": { "const": "CssSelector" },
+        "value": { "type": "string", "minLength": 1 }
+      },
+      "additionalProperties": false
+    },
+    "change": {
+      "type": "object",
+      "required": ["type", "from", "to"],
+      "properties": {
+        "type": { "enum": ["text", "attribute"] },
+        "path": { "type": "string", "minLength": 1 },
+        "name": { "type": "string", "minLength": 1 },
+        "from": { "type": ["string", "null"] },
+        "to": { "type": ["string", "null"] },
+        "extensions": { "$ref": "#/$defs/extensions" }
+      },
+      "additionalProperties": false,
+      "if": { "required": ["type"], "properties": { "type": { "const": "attribute" } } },
+      "then": { "required": ["name"] },
+      "else": {
+        "$comment": "Section 5.3: a text change has no name, and its from and to are text, never null",
+        "properties": { "name": false, "from": { "type": "string" }, "to": { "type": "string" } }
+      }
+    },
+    "placement": {
+      "type": "object",
+      "required": ["position"],
+      "properties": {
+        "position": { "const": "after" },
+        "order": { "type": "integer", "minimum": 1 }
+      },
+      "additionalProperties": false
+    }
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "description": "Selectors are an array of selector objects",
+  "invalidAt": "/items/0/target/selector",
+  "document": {
+    "format": "page-change-format",
+    "version": "0.1",
+    "items": [
+      {
+        "id": "a1",
+        "type": "edit",
+        "target": {
+          "url": "https://example.com/about",
+          "selector": "main h1",
+          "text": "About us"
+        },
+        "comment": "Shorter.",
+        "status": "open"
+      }
+    ]
+  }
+}

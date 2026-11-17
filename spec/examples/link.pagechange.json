@@ -1,0 +1,28 @@
+{
+  "format": "page-change-format",
+  "version": "0.1",
+  "items": [
+    {
+      "id": "q81Z",
+      "number": 2,
+      "type": "edit",
+      "target": {
+        "url": "https://bakery.example/contact",
+        "selector": [
+          { "type": "CssSelector", "value": "footer a.order" }
+        ],
+        "html": "<a class=\"order\" href=\"/shop\">Order online</a>",
+        "text": "Order online",
+        "heading": "Visit us"
+      },
+      "changes": [
+        { "type": "text", "path": ".", "from": "Order online", "to": "Order for pickup" },
+        { "type": "attribute", "path": ".", "name": "href", "from": "/shop", "to": "/pickup" }
+      ],
+      "comment": "The shop is closed, people should go to the pickup page.",
+      "author": { "name": "Anna" },
+      "created": "2026-11-10T09:15:00Z",
+      "status": "open"
+    }
+  ]
+}

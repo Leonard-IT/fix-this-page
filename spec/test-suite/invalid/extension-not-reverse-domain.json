@@ -1,0 +1,12 @@
+{
+  "description": "An extension key is a reverse domain name",
+  "invalidAt": "/extensions/fixthis",
+  "document": {
+    "format": "page-change-format",
+    "version": "0.1",
+    "extensions": {
+      "fixthis": {}
+    },
+    "items": []
+  }
+}

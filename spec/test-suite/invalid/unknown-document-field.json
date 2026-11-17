@@ -1,0 +1,10 @@
+{
+  "description": "Producers do not add fields of their own outside extensions",
+  "invalidAt": "/site",
+  "document": {
+    "format": "page-change-format",
+    "version": "0.1",
+    "site": "https://example.com",
+    "items": []
+  }
+}

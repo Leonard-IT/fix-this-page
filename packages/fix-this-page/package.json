@@ -1,0 +1,44 @@
+{
+  "name": "fix-this-page",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Let people give feedback on your site by pointing at things and changing them directly; you get it as a prompt for your AI coding agent. The feedback stays in their browser.",
+  "license": "MIT",
+  "homepage": "https://fixthis.page",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Leonard-IT/fix-this-page.git",
+    "directory": "packages/fix-this-page"
+  },
+  "bugs": "https://github.com/Leonard-IT/fix-this-page/issues",
+  "keywords": [
+    "feedback",
+    "website-feedback",
+    "annotation",
+    "overlay",
+    "ai",
+    "prompt",
+    "page-change-format"
+  ],
+  "exports": {
+    "./core/*": "./src/core/*.js",
+    "./dist/*": "./dist/*",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "src/core/**/*.js",
+    "dist/fixthis.js",
+    "dist/fixthis-overlay.js",
+    "dist/*.map"
+  ],
+  "jsdelivr": "dist/fixthis.js",
+  "unpkg": "dist/fixthis.js",
+  "scripts": {
+    "build": "node scripts/build.js",
+    "test": "node --test \"test/*.test.js\" \"test/core/*.test.js\" \"test/core/annotator/*.test.js\"",
+    "prepublishOnly": "npm run build && npm test"
+  },
+  "devDependencies": {
+    "esbuild": "0.24.2"
+  }
+}

@@ -1,0 +1,51 @@
+{
+  "description": "Two copies of one element, in the order they were requested",
+  "document": {
+    "format": "page-change-format",
+    "version": "0.1",
+    "items": [
+      {
+        "id": "c1",
+        "number": 1,
+        "type": "duplicate",
+        "target": {
+          "url": "https://example.com/",
+          "selector": [
+            {
+              "type": "CssSelector",
+              "value": "footer a"
+            }
+          ],
+          "html": "<a href=\"/shop\">Shop</a>",
+          "text": "Shop"
+        },
+        "placement": {
+          "position": "after",
+          "order": 1
+        },
+        "status": "open"
+      },
+      {
+        "id": "c2",
+        "number": 2,
+        "type": "duplicate",
+        "target": {
+          "url": "https://example.com/",
+          "selector": [
+            {
+              "type": "CssSelector",
+              "value": "footer a"
+            }
+          ],
+          "html": "<a href=\"/shop\">Shop</a>",
+          "text": "Shop"
+        },
+        "placement": {
+          "position": "after",
+          "order": 2
+        },
+        "status": "open"
+      }
+    ]
+  }
+}

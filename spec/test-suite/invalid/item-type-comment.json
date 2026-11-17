@@ -1,0 +1,19 @@
+{
+  "description": "A comment is an edit without changes, not a type of its own",
+  "invalidAt": "/items/0/type",
+  "document": {
+    "format": "page-change-format",
+    "version": "0.1",
+    "items": [
+      {
+        "id": "a1",
+        "type": "comment",
+        "target": {
+          "url": "https://example.com/about"
+        },
+        "comment": "Make this page shorter.",
+        "status": "open"
+      }
+    ]
+  }
+}

@@ -1,0 +1,34 @@
+{
+  "description": "An attribute change names the attribute",
+  "invalidAt": "/items/0/changes/0/name",
+  "document": {
+    "format": "page-change-format",
+    "version": "0.1",
+    "items": [
+      {
+        "id": "a1",
+        "type": "edit",
+        "target": {
+          "url": "https://example.com/",
+          "selector": [
+            {
+              "type": "CssSelector",
+              "value": "footer a"
+            }
+          ],
+          "html": "<a href=\"/shop\">Shop</a>",
+          "text": "Shop"
+        },
+        "status": "open",
+        "changes": [
+          {
+            "type": "attribute",
+            "path": ".",
+            "from": "/shop",
+            "to": "/pickup"
+          }
+        ]
+      }
+    ]
+  }
+}

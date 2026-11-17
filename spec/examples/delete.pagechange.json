@@ -1,0 +1,22 @@
+{
+  "format": "page-change-format",
+  "version": "0.1",
+  "items": [
+    {
+      "id": "m2Lp",
+      "number": 4,
+      "type": "delete",
+      "target": {
+        "url": "https://bakery.example/",
+        "selector": [
+          { "type": "CssSelector", "value": "aside.banner" }
+        ],
+        "html": "<aside class=\"banner\"><p>Closed for the holidays until 6 January</p></aside>",
+        "text": "Closed for the holidays until 6 January"
+      },
+      "comment": "We are open again.",
+      "created": "2026-11-10T09:25:00Z",
+      "status": "done"
+    }
+  ]
+}

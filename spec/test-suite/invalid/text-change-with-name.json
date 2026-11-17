@@ -1,0 +1,34 @@
+{
+  "description": "Only an attribute change has a name",
+  "invalidAt": "/items/0/changes/0/name",
+  "document": {
+    "format": "page-change-format",
+    "version": "0.1",
+    "items": [
+      {
+        "id": "a1",
+        "type": "edit",
+        "target": {
+          "url": "https://example.com/about",
+          "selector": [
+            {
+              "type": "CssSelector",
+              "value": "main h1"
+            }
+          ],
+          "text": "About us"
+        },
+        "status": "open",
+        "changes": [
+          {
+            "type": "text",
+            "path": ".",
+            "from": "About us",
+            "to": "Who we are",
+            "name": "href"
+          }
+        ]
+      }
+    ]
+  }
+}

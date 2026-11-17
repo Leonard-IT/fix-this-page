@@ -1,0 +1,19 @@
+{
+  "description": "Item ids end up in URLs and file names, so only safe characters are allowed",
+  "invalidAt": "/items/0/id",
+  "document": {
+    "format": "page-change-format",
+    "version": "0.1",
+    "items": [
+      {
+        "id": "../a1",
+        "type": "edit",
+        "target": {
+          "url": "https://example.com/about"
+        },
+        "comment": "Make this page shorter.",
+        "status": "open"
+      }
+    ]
+  }
+}

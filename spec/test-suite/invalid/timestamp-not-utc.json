@@ -1,0 +1,10 @@
+{
+  "description": "Timestamps are in UTC and end in Z",
+  "invalidAt": "/created",
+  "document": {
+    "format": "page-change-format",
+    "version": "0.1",
+    "created": "2026-11-10T10:00:00+01:00",
+    "items": []
+  }
+}

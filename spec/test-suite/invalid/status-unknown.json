@@ -1,0 +1,19 @@
+{
+  "description": "An item is open or done; other values are not PCF 0.1",
+  "invalidAt": "/items/0/status",
+  "document": {
+    "format": "page-change-format",
+    "version": "0.1",
+    "items": [
+      {
+        "id": "a1",
+        "type": "edit",
+        "target": {
+          "url": "https://example.com/about"
+        },
+        "comment": "Make this page shorter.",
+        "status": "verwerkt"
+      }
+    ]
+  }
+}

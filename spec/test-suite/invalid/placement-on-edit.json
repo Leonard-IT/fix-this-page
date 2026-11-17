@@ -1,0 +1,36 @@
+{
+  "description": "Only a duplicate has a placement",
+  "invalidAt": "/items/0/placement",
+  "document": {
+    "format": "page-change-format",
+    "version": "0.1",
+    "items": [
+      {
+        "id": "a1",
+        "type": "edit",
+        "target": {
+          "url": "https://example.com/about",
+          "selector": [
+            {
+              "type": "CssSelector",
+              "value": "main h1"
+            }
+          ],
+          "text": "About us"
+        },
+        "status": "open",
+        "changes": [
+          {
+            "type": "text",
+            "path": ".",
+            "from": "About us",
+            "to": "Who we are"
+          }
+        ],
+        "placement": {
+          "position": "after"
+        }
+      }
+    ]
+  }
+}

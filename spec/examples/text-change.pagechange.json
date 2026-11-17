@@ -1,0 +1,29 @@
+{
+  "format": "page-change-format",
+  "version": "0.1",
+  "id": "Vq3kP0",
+  "created": "2026-11-10T09:00:00Z",
+  "generator": { "name": "fixthis.page" },
+  "items": [
+    {
+      "id": "k3Fq",
+      "number": 1,
+      "type": "edit",
+      "target": {
+        "url": "https://bakery.example/",
+        "selector": [
+          { "type": "CssSelector", "value": "main > section.hero > h1" }
+        ],
+        "html": "<h1 class=\"hero-title\">Fresh bread every morning</h1>",
+        "text": "Fresh bread every morning",
+        "viewport": { "width": 1280, "height": 800 }
+      },
+      "changes": [
+        { "type": "text", "path": ".", "from": "Fresh bread every morning", "to": "Fresh bread every day from 7 am" }
+      ],
+      "author": { "name": "Anna" },
+      "created": "2026-11-10T09:12:00Z",
+      "status": "open"
+    }
+  ]
+}

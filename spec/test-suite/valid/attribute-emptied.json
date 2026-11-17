@@ -1,0 +1,34 @@
+{
+  "description": "An empty attribute value is a request, not a gap",
+  "document": {
+    "format": "page-change-format",
+    "version": "0.1",
+    "items": [
+      {
+        "id": "a1",
+        "type": "edit",
+        "target": {
+          "url": "https://example.com/",
+          "selector": [
+            {
+              "type": "CssSelector",
+              "value": "footer a"
+            }
+          ],
+          "html": "<a href=\"/shop\">Shop</a>",
+          "text": "Shop"
+        },
+        "status": "open",
+        "changes": [
+          {
+            "type": "attribute",
+            "path": ".",
+            "name": "alt",
+            "from": "Logo",
+            "to": ""
+          }
+        ]
+      }
+    ]
+  }
+}

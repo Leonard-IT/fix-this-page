@@ -1,0 +1,8 @@
+{
+  "description": "The items array is required, even when empty",
+  "invalidAt": "/items",
+  "document": {
+    "format": "page-change-format",
+    "version": "0.1"
+  }
+}

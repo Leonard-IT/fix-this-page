@@ -1,0 +1,18 @@
+{
+  "description": "A target with only a url is the page as a whole, which can only get a comment",
+  "invalidAt": "/items/0/target",
+  "document": {
+    "format": "page-change-format",
+    "version": "0.1",
+    "items": [
+      {
+        "id": "a1",
+        "type": "delete",
+        "target": {
+          "url": "https://example.com/about"
+        },
+        "status": "open"
+      }
+    ]
+  }
+}

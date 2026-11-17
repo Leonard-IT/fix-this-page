@@ -1,0 +1,52 @@
+{
+  "description": "Every optional field of the document and an item",
+  "document": {
+    "format": "page-change-format",
+    "version": "0.1",
+    "$schema": "https://example.com/page-change-format-0.1.schema.json",
+    "id": "Vq3kP0",
+    "created": "2026-11-10T09:00:00Z",
+    "generator": {
+      "name": "example",
+      "version": "1.2",
+      "url": "https://example.com"
+    },
+    "items": [
+      {
+        "id": "a1",
+        "type": "edit",
+        "target": {
+          "url": "https://example.com/about",
+          "selector": [
+            {
+              "type": "CssSelector",
+              "value": "main h1"
+            }
+          ],
+          "text": "About us",
+          "html": "<h1>About us</h1>",
+          "heading": "About",
+          "viewport": {
+            "width": 390,
+            "height": 844
+          }
+        },
+        "comment": "Friendlier please.",
+        "status": "done",
+        "number": 1,
+        "changes": [
+          {
+            "type": "text",
+            "path": ".",
+            "from": "About us",
+            "to": "Who we are"
+          }
+        ],
+        "author": {
+          "name": "Anna"
+        },
+        "created": "2026-11-10T09:12:00.250Z"
+      }
+    ]
+  }
+}

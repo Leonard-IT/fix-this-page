@@ -1,0 +1,28 @@
+{
+  "description": "PCF 0.1 only places copies after the original",
+  "invalidAt": "/items/0/placement/position",
+  "document": {
+    "format": "page-change-format",
+    "version": "0.1",
+    "items": [
+      {
+        "id": "a1",
+        "type": "duplicate",
+        "target": {
+          "url": "https://example.com/about",
+          "selector": [
+            {
+              "type": "CssSelector",
+              "value": "main h1"
+            }
+          ],
+          "text": "About us"
+        },
+        "status": "open",
+        "placement": {
+          "position": "before"
+        }
+      }
+    ]
+  }
+}

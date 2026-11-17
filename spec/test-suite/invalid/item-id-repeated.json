@@ -1,0 +1,28 @@
+{
+  "description": "Item ids are unique within the document",
+  "invalidAt": "/items/1/id",
+  "document": {
+    "format": "page-change-format",
+    "version": "0.1",
+    "items": [
+      {
+        "id": "a1",
+        "type": "edit",
+        "target": {
+          "url": "https://example.com/about"
+        },
+        "comment": "Make this page shorter.",
+        "status": "open"
+      },
+      {
+        "id": "a1",
+        "type": "edit",
+        "target": {
+          "url": "https://example.com/about"
+        },
+        "comment": "Another request.",
+        "status": "open"
+      }
+    ]
+  }
+}

@@ -1,0 +1,9 @@
+{
+  "description": "The format is not page-change-format",
+  "invalidAt": "/format",
+  "document": {
+    "format": "pcf",
+    "version": "0.1",
+    "items": []
+  }
+}
