@@ -1,0 +1,31 @@
+{
+  "description": "A move needs the target of the element it goes next to",
+  "invalidAt": "/items/0/placement/target",
+  "document": {
+    "format": "page-change-format",
+    "version": "0.1",
+    "items": [
+      {
+        "id": "m1",
+        "number": 1,
+        "type": "move",
+        "target": {
+          "url": "https://bakery.example/menu",
+          "selector": [
+            {
+              "type": "CssSelector",
+              "value": "section.bread"
+            }
+          ],
+          "heading": "Bread",
+          "text": "Bread Sourdough loaf"
+        },
+        "placement": {
+          "position": "after"
+        },
+        "created": "2026-11-10T09:25:00Z",
+        "status": "open"
+      }
+    ]
+  }
+}

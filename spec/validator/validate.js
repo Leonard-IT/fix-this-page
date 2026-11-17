@@ -4,7 +4,8 @@ const fs = require('node:fs');
 const { checkSchema } = require('./json-schema');
 const SCHEMA = require('../schema/page-change-format-0.1.schema.json');
 
-const ITEM_TYPE = Object.freeze({ Edit: 'edit', Duplicate: 'duplicate', Delete: 'delete' });
+const ITEM_TYPE = Object.freeze({ Edit: 'edit', Duplicate: 'duplicate', Move: 'move', Delete: 'delete' });
+const POSITION = Object.freeze({ Before: 'before', After: 'after' });
 // Section 5.2: the fields that point to an element; a target without any of them is the page as a whole
 const ELEMENT_ANCHORS = Object.freeze(['selector', 'html', 'text', 'heading']);
 const MESSAGE = Object.freeze({
@@ -12,7 +13,16 @@ const MESSAGE = Object.freeze({
   DuplicateNumber: 'is also the number of an earlier item',
   EditWithoutRequest: 'an edit needs at least one change or a non-empty comment',
   DeleteWithChanges: 'a delete has no changes',
-  PlacementNotOnDuplicate: 'only a duplicate has a placement',
+  PlacementOnlyForCopyOrMove: 'only a duplicate or a move has a placement',
+  DuplicateGoesAfter: 'a duplicate goes after the original, so its position is after',
+  DuplicateHasNoTarget: 'a duplicate goes next to its own element, so its placement has no target',
+  MoveWithChanges: 'a move has no changes',
+  MoveWithoutPlacement: 'a move needs a placement that says where the element goes',
+  MoveWithoutTarget: 'a move needs the target of the element it goes next to',
+  MoveHasNoOrder: 'a move has no order',
+  MoveNextToItself: 'an element cannot go next to itself',
+  MoveToWholePage: 'a move goes next to an element, so its destination must point to one, not to the page as a whole',
+  MoveToOtherPage: 'a move stays on one page, so the destination has the same url as the target',
   WholePageNotComment: 'a target with only a url is the whole page, so the item must be an edit with a comment',
   AttributeChangesNothing: 'an attribute that was absent (from: null) cannot be removed (to: null)',
 });
@@ -49,12 +59,49 @@ function itemErrors(item, index) {
   const errors = [];
   if (item.type === ITEM_TYPE.Edit && !hasRequest(item)) errors.push(at('', MESSAGE.EditWithoutRequest));
   if (item.type === ITEM_TYPE.Delete && changes.length) errors.push(at('/changes', MESSAGE.DeleteWithChanges));
-  if (item.type !== ITEM_TYPE.Duplicate && item.placement) errors.push(at('/placement', MESSAGE.PlacementNotOnDuplicate));
+  errors.push(...placementErrors(item).map(({ path, message }) => at(path, message)));
   if (isWholePage(item.target) && !isCommentOnly(item)) errors.push(at('/target', MESSAGE.WholePageNotComment));
   changes.forEach((change, number) => {
     if (change.from === null && change.to === null) errors.push(at(`/changes/${number}`, MESSAGE.AttributeChangesNothing));
   });
   return errors;
+}
+
+// Section 5.4
+function placementErrors(item) {
+  const { placement } = item;
+  if (item.type === ITEM_TYPE.Move) return movePlacementErrors(item);
+  if (!placement) return [];
+  if (item.type !== ITEM_TYPE.Duplicate) return [{ path: '/placement', message: MESSAGE.PlacementOnlyForCopyOrMove }];
+  const errors = [];
+  if (placement.position !== POSITION.After) errors.push({ path: '/placement/position', message: MESSAGE.DuplicateGoesAfter });
+  if (placement.target) errors.push({ path: '/placement/target', message: MESSAGE.DuplicateHasNoTarget });
+  return errors;
+}
+
+function movePlacementErrors(item) {
+  const { placement } = item;
+  if (!placement) return [{ path: '/placement', message: MESSAGE.MoveWithoutPlacement }];
+  const errors = [];
+  if ((item.changes || []).length) errors.push({ path: '/changes', message: MESSAGE.MoveWithChanges });
+  if (!placement.target) errors.push({ path: '/placement/target', message: MESSAGE.MoveWithoutTarget });
+  if (placement.order !== undefined) errors.push({ path: '/placement/order', message: MESSAGE.MoveHasNoOrder });
+  if (placement.target) errors.push(...destinationErrors(item.target, placement.target));
+  return errors;
+}
+
+function destinationErrors(target, destination) {
+  const path = '/placement/target';
+  if (isWholePage(destination)) return [{ path, message: MESSAGE.MoveToWholePage }];
+  if (destination.url !== target.url) return [{ path, message: MESSAGE.MoveToOtherPage }];
+  if (sameElement(target, destination)) return [{ path, message: MESSAGE.MoveNextToItself }];
+  return [];
+}
+
+// The selector is how an element is told apart in the document; a producer that gives none cannot be checked
+function sameElement(a, b) {
+  const selector = (target) => (target.selector || []).map((s) => s.value).join('|');
+  return selector(a) !== '' && selector(a) === selector(b);
 }
 
 // Section 5.1: an edit asks for concrete changes, or in words, or both

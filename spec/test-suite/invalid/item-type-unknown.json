@@ -1,5 +1,5 @@
 {
-  "description": "PCF 0.1 has three item types",
+  "description": "PCF 0.1 has four item types",
   "invalidAt": "/items/0/type",
   "document": {
     "format": "page-change-format",
@@ -7,7 +7,7 @@
     "items": [
       {
         "id": "a1",
-        "type": "move",
+        "type": "insert",
         "target": {
           "url": "https://example.com/about"
         },

@@ -1,0 +1,36 @@
+{
+  "description": "A duplicate goes next to its own element",
+  "invalidAt": "/items/0/placement/target",
+  "document": {
+    "format": "page-change-format",
+    "version": "0.1",
+    "items": [
+      {
+        "id": "d1",
+        "type": "duplicate",
+        "target": {
+          "url": "https://bakery.example/menu",
+          "selector": [
+            {
+              "type": "CssSelector",
+              "value": "li.item"
+            }
+          ]
+        },
+        "placement": {
+          "position": "after",
+          "target": {
+            "url": "https://bakery.example/menu",
+            "selector": [
+              {
+                "type": "CssSelector",
+                "value": "li.other"
+              }
+            ]
+          }
+        },
+        "status": "open"
+      }
+    ]
+  }
+}

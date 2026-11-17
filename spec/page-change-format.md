@@ -26,11 +26,11 @@ A PCF document is a JSON text ([RFC 8259](https://www.rfc-editor.org/rfc/rfc8259
 
 PCF 0.1 covers only what is needed to get a change request from a person looking at a page to whoever changes the page's source:
 
-- three item types: edit, duplicate and delete;
+- four item types: edit, duplicate, move and delete;
 - text changes and attribute changes inside an element;
 - the status of each item, and an optional report of what was done.
 
-Out of scope for 0.1: screenshots, screen areas, style changes (CSS properties), inserting or moving elements, threads and replies, and access control. Producers can carry such data in extensions (section 9). Later minor versions can add item types, change types and placements without breaking 0.1 consumers (section 9.1).
+Out of scope for 0.1: screenshots, screen areas, style changes (CSS properties), inserting new elements, threads and replies, and access control. Producers can carry such data in extensions (section 9). Later minor versions can add item types, change types and placements without breaking 0.1 consumers (section 9.1).
 
 ## 4. Document
 
@@ -89,10 +89,10 @@ An item is one requested change to one element, or to a page as a whole.
 | --- | --- | --- |
 | `id` | MUST | A string of 1 to 64 characters from `A–Z`, `a–z`, `0–9`, `_` and `-`, unique within the document. Reports refer to items by `id`. |
 | `number` | MAY | A positive integer people can use to refer to the item ("item 3"). Unique within the document when present, and the same in every export of the same item. |
-| `type` | MUST | `edit`, `duplicate` or `delete` (section 5.1). |
+| `type` | MUST | `edit`, `duplicate`, `move` or `delete` (section 5.1). |
 | `target` | MUST | The element or page the item is about (section 5.2). |
 | `changes` | MAY | Changes to the element (section 5.3). |
-| `placement` | MAY | Where a copy goes; only for `duplicate` (section 5.4). |
+| `placement` | MAY | Where a copy goes (`duplicate`) or where the element goes (`move`); MUST be present for `move` (section 5.4). |
 | `comment` | MAY | Free text from the person who made the item. |
 | `author` | MAY | Who made the item: an object with `name`. It MAY be left out; anonymous items are allowed. |
 | `created` | SHOULD | When the item was made. |
@@ -105,6 +105,7 @@ An item is one requested change to one element, or to a page as a whole.
 | --- | --- | --- |
 | `edit` | Change the element: concrete changes to its text or attributes, a request in words, or both. | `changes` MUST contain at least one change, or `comment` MUST be present and non-empty. |
 | `duplicate` | Duplicate the element and place the copy next to it. | `changes`, when present, apply to the copy only. Without changes, the copy has the same content as the original. |
+| `move` | Move the element to another place in the page. | `placement` MUST say where, and `changes` MUST be empty. |
 | `delete` | Remove the element. | `changes` MUST be empty. |
 
 An `edit` with only a `comment` is a request in words: the person describes what should change, and the consumer works out how. A link is not a separate type: changing a link is an `edit` with an attribute change on `href`, usually together with a text change.
@@ -182,14 +183,28 @@ When a text change touches a phone number, email address or URL, a consumer SHOU
 
 **Attributes.** Any attribute name is allowed in a document. Consumers MUST NOT apply event handler attributes (names starting with `on`), MUST NOT apply `javascript:` or `data:` URLs to `href` or `src`, and SHOULD ask a person before applying any attribute other than `href`, `src`, `alt` and `title`. Producers MAY limit which attributes people can change.
 
-### 5.4 Placement (duplicate only)
+### 5.4 Placement (duplicate and move)
+
+For a `duplicate`:
 
 ```json
 { "position": "after", "order": 2 }
 ```
 
-- `position`: `after`, the only value in 0.1. The copy goes directly after the original element, as a sibling.
+- `position`: `after`, the only value for a duplicate. The copy goes directly after the original element, as a sibling.
 - `order`: a positive integer, default `1`. When one element is duplicated several times, the copy with `order` *n* goes after the copy with `order` *n − 1*, so the copies keep the order in which they were requested. When that copy does not exist, for example because its item was skipped, the copy goes after the copy with the highest lower `order` that does exist, or else directly after the original.
+
+For a `move`:
+
+```json
+{ "position": "before", "target": { "url": "https://bakery.example/menu", "selector": [{ "type": "CssSelector", "value": "section.bread" }], "heading": "Bread" } }
+```
+
+- `position`: `before` or `after`. The element of the item's `target` goes directly before or after the element that `placement.target` points to, as a sibling of it.
+- `target`: the element it goes next to, described like any other target (section 5.2) and found the same way. It has the same `url` as the item's target. It MUST NOT be, or be inside, the element that moves. A consumer that cannot find it uniquely MUST skip the item and say so, as the element would otherwise end up in the wrong place.
+- `order` has no meaning for a move and MUST NOT be present.
+
+Both targets are found on the page as it is after the items before this one (section 5.5), and neither refers to a copy made by another item. The destination `url` MUST equal the `url` of the item's target, and the destination MUST point to an element, not to the page as a whole.
 
 ### 5.5 Order of items
 
@@ -267,7 +282,7 @@ A [JSON schema](schema/page-change-format-0.1.schema.json) describes the structu
 The JSON document is the canonical form. A Markdown prompt for an AI agent is one rendering of it. A good rendering:
 
 - lists the open items with their `number` or `id`, page URL and type, and leaves out items that are `done` or lists them without their data;
-- states the task for `duplicate`, `delete` and comment-only `edit` items in plain words;
+- states the task for `duplicate`, `move`, `delete` and comment-only `edit` items in plain words;
 - writes each change as one line (`replace: "a" → "b"`, `add: "…"`, `remove: "…"`, `set href: "…"`, `remove attribute href`);
 - leaves out anchors that add nothing, such as `html` that is only the text in a tag, or `text` when a text change on `.` already gives it;
 - puts all untrusted content in one fenced block per item (section 8);
@@ -286,7 +301,7 @@ PCF is not a profile of the [W3C Web Annotation Data Model](https://www.w3.org/T
 | `number` | a property in a PCF namespace |
 | `type: edit` without changes | `motivation: commenting` |
 | `type: edit` with changes | `motivation: editing` |
-| `type: duplicate`, `type: delete` | `motivation: editing`, with the type in the body |
+| `type: duplicate`, `type: move`, `type: delete` | `motivation: editing`, with the type in the body |
 | `comment` | a `TextualBody` with `purpose: commenting` |
 | `changes`, `placement` | a body in a PCF namespace |
 | `target.url` | `target.source` |

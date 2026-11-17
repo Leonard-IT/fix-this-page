@@ -42,7 +42,7 @@
       "properties": {
         "id": { "type": "string", "pattern": "^[A-Za-z0-9_-]{1,64}$" },
         "number": { "type": "integer", "minimum": 1 },
-        "type": { "enum": ["edit", "duplicate", "delete"] },
+        "type": { "enum": ["edit", "duplicate", "move", "delete"] },
         "target": { "$ref": "#/$defs/target" },
         "changes": { "type": "array", "items": { "$ref": "#/$defs/change" } },
         "placement": { "$ref": "#/$defs/placement" },
@@ -117,8 +117,9 @@
       "type": "object",
       "required": ["position"],
       "properties": {
-        "position": { "const": "after" },
-        "order": { "type": "integer", "minimum": 1 }
+        "position": { "enum": ["before", "after"] },
+        "order": { "type": "integer", "minimum": 1 },
+        "target": { "$ref": "#/$defs/target" }
       },
       "additionalProperties": false
     }
