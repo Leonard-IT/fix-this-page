@@ -4,6 +4,7 @@ const { applyToPage, NOTHING_TO_REVERT } = require('./apply-to-page.js');
 const { applyChanges, invertChanges, isSafeChange } = require('./apply-changes.js');
 const { createClone, insertCloneAfter, clonesOf } = require('./clones.js');
 const { describeElement } = require('./describe-element.js');
+const { flowAxis, positionsFor, choiceSpot, choiceLabel, placeAt, rememberPosition } = require('./move.js');
 const {
   ATTR, CLONE_SELECTOR, LINK_SELECTOR, isHostControl, isPageElement, tagOf, norm, esc,
 } = require('./dom.js');
@@ -17,6 +18,7 @@ const { elementTexts, diffTexts, leafTexts, linkChanges, previewableLinkChanges 
 
 const NEW_CLONE_ID = 'new';
 const CLONE_PLACEMENT = Object.freeze({ relative_to: 'source', position: 'after' });
+const MOVE_ATTRIBUTES = Object.freeze([ATTR.Moving, ATTR.Moved]);
 const PIN_MARGIN = 12;
 const TIP_OFFSET = 36;
 const REVEAL_DELAY_MS = 400;
@@ -24,13 +26,17 @@ const REVEAL_HIGHLIGHT_MS = 1200;
 const KEY = Object.freeze({ Escape: 'Escape' });
 const DISPLAY = Object.freeze({ None: 'none', Block: 'block', Flex: 'flex' });
 const UI_PART = Object.freeze({
-  HoverBox: '.hover', SelectionBox: '.sel', Pins: '.pins', Toolbar: '.toolbar', Tip: '.tip', Panel: '.panel',
+  HoverBox: '.hover', SelectionBox: '.sel', Pins: '.pins', Drops: '.drops', Toolbar: '.toolbar', Tip: '.tip', Panel: '.panel',
 });
 const PANEL_CONTROL = Object.freeze({
   Note: '[data-x="note"]', NoteBox: '[data-x="notebox"]', Hint: '[data-x="hint"]', StepTwo: '[data-x="n2"]',
   Cancel: '[data-x="cancel"]', Save: '[data-x="save"]',
 });
 const HINT = Object.freeze({ Waiting: 'Waiting for your change…', Detected: 'Change detected ✓' });
+const MOVE_TEXT = Object.freeze({
+  Pick: 'Hover or tap the block it should go next to, then choose Before or After.',
+  Previewed: 'The block now sits at its new place. Pick another block to change it, or save.',
+});
 
 /**
  * @typedef {{ selector: string, text: string, html: string, heading: string }} ElementDescription
@@ -51,12 +57,13 @@ const HINT = Object.freeze({ Waiting: 'Waiting for your change…', Detected: 'C
 function attach(doc, host) {
   const win = doc.defaultView;
   // applied: what is shown in the page for each item, with how to take it out again
-  const state = { selected: null, editing: null, pins: [], panelAnchor: null, applied: [] };
+  const state = { selected: null, editing: null, moving: null, pins: [], panelAnchor: null, applied: [] };
   const startAction = Object.freeze({
     [ACTION.Comment]: startComment,
     [ACTION.Edit]: startTextEdit,
     [ACTION.Link]: startLinkEdit,
     [ACTION.Clone]: startDuplicate,
+    [ACTION.Move]: startMove,
     [ACTION.Delete]: startDelete,
   });
   const listeners = new AbortController();
@@ -79,6 +86,7 @@ function attach(doc, host) {
       const el = findTarget(doc, annotation.target || {});
       if (!el) { missingIds.add(annotation.id); continue; }
       const shown = applyToPage(annotation, el);
+      if (!shown) { missingIds.add(annotation.id); continue; }
       state.applied.push({ annotation, revert: shown.revert });
       addPin(annotation, shown.el);
     }
@@ -88,6 +96,7 @@ function attach(doc, host) {
   /** Takes the layer out of the page again: its interface, its listeners and every change it shows. */
   function detach() {
     if (state.editing) state.editing.cancel();
+    if (state.moving) state.moving.cancel();
     closePanel();
     revertApplied();
     listeners.abort();
@@ -115,7 +124,7 @@ function attach(doc, host) {
   }
 
   function isBusy() {
-    return Boolean(state.editing) || isPanelOpen();
+    return Boolean(state.editing) || Boolean(state.moving) || isPanelOpen();
   }
 
   // ---------- page events ----------
@@ -138,6 +147,7 @@ function attach(doc, host) {
   }
 
   function onHover(event) {
+    if (state.moving) return isInterfaceEvent(event) ? undefined : offerPositions(event.target);
     if (isBusy() || isInterfaceEvent(event) || !isPageElement(event.target)) return hideBox(UI_PART.HoverBox);
     showBox(UI_PART.HoverBox, event.target);
   }
@@ -147,6 +157,7 @@ function attach(doc, host) {
     if (isInEditedElement(event)) return; // lets the cursor be placed in the text
     event.preventDefault();
     event.stopImmediatePropagation();
+    if (state.moving) return offerPositions(event.target);
     if (isBusy()) return;
     const el = event.target;
     if (!isPageElement(el)) return clearSelection();
@@ -168,6 +179,7 @@ function attach(doc, host) {
   function onKeyDown(event) {
     if (event.key !== KEY.Escape) return;
     if (state.editing) return state.editing.cancel();
+    if (state.moving) return state.moving.cancel();
     if (isPanelOpen()) return closePanel();
     clearSelection();
   }
@@ -180,6 +192,7 @@ function attach(doc, host) {
     positionPins();
     placePanel();
     hideBox(UI_PART.HoverBox);
+    clearDrops();
   }
 
   function isInterfaceEvent(event) {
@@ -340,6 +353,85 @@ function attach(doc, host) {
       },
       onCancel: cancel,
     });
+  }
+
+  // The block stays where it is until a spot is chosen; choosing shows it there, and saving keeps it there
+  function startMove(el) {
+    const target = describeElement(el);
+    const restore = rememberPosition(el);
+    const cancel = () => {
+      restore();
+      MOVE_ATTRIBUTES.forEach((name) => el.removeAttribute(name));
+      state.moving = null;
+      clearDrops();
+      hideBox(UI_PART.HoverBox);
+      closePanel();
+      select(el);
+    };
+    state.moving = { el, restore, cancel, placement: null };
+    el.setAttribute(ATTR.Moving, '');
+    clearSelection();
+    openPanel({
+      title: 'Move block', text: MOVE_TEXT.Pick, saveLabel: 'Save move', collapseComment: true, saveDisabled: true,
+      onSave: async (field) => {
+        const annotation = await host.save({ type: ANNOTATION_TYPE.Move, target, placement: state.moving.placement, comment: field('comment').value.trim() });
+        state.moving = null;
+        afterSave(annotation, el, () => { el.removeAttribute(ATTR.Moved); restore(); });
+      },
+      onCancel: cancel,
+    });
+  }
+
+  // The choices appear on the block the pointer is over, on its edges
+  function offerPositions(anchor) {
+    const positions = positionsFor(state.moving.el, anchor);
+    if (!positions.length) return clearDrops();
+    showBox(UI_PART.HoverBox, anchor);
+    const axis = flowAxis(win.getComputedStyle(anchor.parentElement));
+    const rect = anchor.getBoundingClientRect();
+    const drops = part(UI_PART.Drops);
+    drops.innerHTML = positions.map((position) => dropButton(position, axis, choiceSpot(rect, axis, position, viewportOf(win)))).join('');
+    drops.querySelectorAll('button').forEach((button) => {
+      button.onclick = (event) => { event.stopPropagation(); chooseSpot(anchor, button.dataset.p); };
+    });
+  }
+
+  function dropButton(position, axis, spot) {
+    return `<button class="drop" data-p="${position}" style="left:${spot.left}px;top:${spot.top}px">${choiceLabel(axis, position)}</button>`;
+  }
+
+  function clearDrops() {
+    part(UI_PART.Drops).innerHTML = '';
+  }
+
+  function chooseSpot(anchor, position) {
+    const { el, restore } = state.moving;
+    // The anchor is described on the page as it was, before the block is shown in its new place
+    restore();
+    // The choices were offered while an earlier choice was shown, so this one can be where the block started
+    if (!positionsFor(el, anchor).includes(position)) return resetChoice(el);
+    state.moving.placement = { position, anchor: describeElement(anchor) };
+    placeAt(el, anchor, position);
+    el.removeAttribute(ATTR.Moving);
+    el.setAttribute(ATTR.Moved, '');
+    el.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+    clearDrops();
+    hideBox(UI_PART.HoverBox);
+    const panel = part(UI_PART.Panel);
+    panel.querySelector('p').textContent = MOVE_TEXT.Previewed;
+    panel.querySelector(PANEL_CONTROL.Save).disabled = false;
+  }
+
+  // Back to the start of a move: the block is where it began and nothing is chosen yet
+  function resetChoice(el) {
+    state.moving.placement = null;
+    el.removeAttribute(ATTR.Moved);
+    el.setAttribute(ATTR.Moving, '');
+    clearDrops();
+    hideBox(UI_PART.HoverBox);
+    const panel = part(UI_PART.Panel);
+    panel.querySelector('p').textContent = MOVE_TEXT.Pick;
+    panel.querySelector(PANEL_CONTROL.Save).disabled = true;
   }
 
   function startDelete(el) {

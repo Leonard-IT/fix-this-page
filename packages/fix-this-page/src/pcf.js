@@ -2,7 +2,7 @@
 // shared writer in src/core/pcf.js. Inside the browser the items keep the shape of a fixthis session, because the prompt
 // renderer reads that shape.
 const { ANNOTATION_TYPE } = require('./core/annotator.js');
-const { withoutEmpty, PCF, ITEM_TYPE, CHANGE_TYPE, SELECTOR_TYPE, STATUS, PLACEMENT, CHANGE_KIND } = require('./core/pcf.js');
+const { withoutEmpty, PCF, ITEM_TYPE, CHANGE_TYPE, SELECTOR_TYPE, STATUS, PLACEMENT, MOVE_POSITIONS, CHANGE_KIND } = require('./core/pcf.js');
 
 // The session keeps where a copy goes relative to; PCF only has the original
 const RELATIVE_TO_SOURCE = 'source';
@@ -38,8 +38,14 @@ function assertUsableDocument(doc) {
 function canShow(item) {
   if (!Object.values(ITEM_TYPE).includes(item.type)) return false;
   if (!item.target || pathOf(item.target.url) === null) return false;
-  if (item.placement && item.placement.position !== PLACEMENT.Position) return false;
+  if (!canPlace(item)) return false;
   return (item.changes || []).every(canApply);
+}
+
+// A move needs the block it goes next to; any other placement can only be "after" (spec 5.4)
+function canPlace(item) {
+  if (item.type === ITEM_TYPE.Move) return Boolean(item.placement) && MOVE_POSITIONS.includes(item.placement.position) && Boolean(item.placement.target);
+  return !item.placement || item.placement.position === PLACEMENT.Position;
 }
 
 // An attribute change sets a value, or removes the attribute with null (spec 5.3)
@@ -57,17 +63,15 @@ function toAnnotation(item) {
     type: annotationTypeOf(item, changes),
     pageId: pathOf(target.url),
     target: withoutEmpty({
+      ...toElementData(target),
       url: pathOf(target.url),
-      selector: cssSelectorOf(target.selector),
-      text: target.text,
-      html: target.html,
-      heading: target.heading,
       viewport: target.viewport && { w: target.viewport.width, h: target.viewport.height },
     }),
     changes,
     placement: item.type === ITEM_TYPE.Duplicate
       ? { relative_to: RELATIVE_TO_SOURCE, position: PLACEMENT.Position, order: Number(item.placement && item.placement.order) || PLACEMENT.DefaultOrder }
       : undefined,
+    placement: item.type === ITEM_TYPE.Move ? { position: item.placement.position, anchor: toElementData(item.placement.target) } : undefined,
     comment: item.comment || '',
     author: (item.author && item.author.name) || '',
     status: item.status === STATUS.Done ? STATUS.Done : STATUS.Open,
@@ -79,6 +83,7 @@ function toAnnotation(item) {
 function annotationTypeOf(item, changes) {
   if (item.type === ITEM_TYPE.Duplicate) return ANNOTATION_TYPE.Clone;
   if (item.type === ITEM_TYPE.Delete) return ANNOTATION_TYPE.Delete;
+  if (item.type === ITEM_TYPE.Move) return ANNOTATION_TYPE.Move;
   return changes.length ? ANNOTATION_TYPE.Edit : ANNOTATION_TYPE.Comment;
 }
 
@@ -88,6 +93,11 @@ function fromChange(change) {
     return withoutEmpty({ kind: CHANGE_KIND.Attr, path: change.path || '.', name: change.name, from: change.from ?? '', to: change.to }, ['from', 'to']);
   }
   return withoutEmpty({ kind: CHANGE_KIND.Text, path: change.path || '.', from: change.from, to: change.to }, ['from', 'to']);
+}
+
+// What the session keeps to find an element again
+function toElementData(target) {
+  return withoutEmpty({ selector: cssSelectorOf(target.selector), text: target.text, html: target.html, heading: target.heading });
 }
 
 function cssSelectorOf(selectors) {

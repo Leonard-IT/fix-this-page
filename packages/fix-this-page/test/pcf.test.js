@@ -89,6 +89,42 @@ describe('PCF export and import', () => {
     });
   });
 
+  it('exports a move with the block it goes next to, and reads it back', () => {
+    const store = newStore();
+    store.add({ path: '/menu', url: SITE + '/menu' }, {
+      type: 'move',
+      target: { url: '/menu', selector: 'section.bread', text: 'Bread', html: '<section class="bread">' },
+      placement: { position: 'before', anchor: { selector: 'section.cakes', heading: 'Cakes' } },
+      comment: '',
+    });
+
+    const exported = toPcf(store.session(), { now: NOW, generator: GENERATOR });
+    const [item] = exported.items;
+
+    assert.deepEqual(validate(exported), []);
+    assert.equal(item.type, 'move');
+    assert.deepEqual(item.placement, {
+      position: 'before',
+      target: { url: SITE + '/menu', selector: [{ type: 'CssSelector', value: 'section.cakes' }], heading: 'Cakes' },
+    });
+    const reread = readFeedbackFile(exported).data.annotations[0];
+    assert.deepEqual(reread.placement, { position: 'before', anchor: { selector: 'section.cakes', heading: 'Cakes' } });
+  });
+
+  it('leaves out a move that does not say where the block goes', () => {
+    const store = newStore();
+    store.add({ path: '/menu', url: SITE + '/menu' }, { type: 'move', target: { url: '/menu', selector: 'section.bread' }, comment: '' });
+
+    assert.deepEqual(toPcf(store.session(), { now: NOW, generator: GENERATOR }).items, []);
+  });
+
+  it('skips an imported move that has no block to go next to', () => {
+    const example = readExample('move.pagechange.json');
+    delete example.items[0].placement.target;
+
+    assert.equal(readFeedbackFile(example).skipped, 1);
+  });
+
   it('writes valid PCF for an item made in the overlay', () => {
     const store = newStore();
     store.add({ path: '/team', url: SITE + '/team' }, {

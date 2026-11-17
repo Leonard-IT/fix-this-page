@@ -1,7 +1,7 @@
 // What the annotation layer knows about the document it is attached to: our own markers, which elements are
 // not the page's, and the plain text of an element.
 const ATTR = Object.freeze({
-  Clone: 'data-fb-clone', Source: 'data-fb-source', Deleted: 'data-fb-deleted', Ours: 'data-fb', Editable: 'contenteditable',
+  Clone: 'data-fb-clone', Source: 'data-fb-source', Deleted: 'data-fb-deleted', Moving: 'data-fb-moving', Moved: 'data-fb-moved', Ours: 'data-fb', Editable: 'contenteditable',
 });
 const UI_TAG = 'fb-ui';
 const CLONE_SELECTOR = `[${ATTR.Clone}]`;

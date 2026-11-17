@@ -4,6 +4,8 @@ const { ATTR } = require('./dom.js');
 const PAGE_CSS = `
   [${ATTR.Deleted}] { opacity: .3 !important; outline: 2px dashed #B00020 !important; outline-offset: 2px; }
   [${ATTR.Clone}] { outline: 2px dashed #0A0A0A !important; outline-offset: 2px; }
+  [${ATTR.Moving}] { opacity: .3 !important; outline: 2px dashed #B00020 !important; outline-offset: 2px; }
+  [${ATTR.Moved}] { outline: 2px dashed #0A0A0A !important; outline-offset: 2px; }
   [${ATTR.Editable}="true"] { outline: 2px solid #0A0A0A !important; outline-offset: 2px; cursor: text !important; }
   * { cursor: default; }`;
 // The interface lives in a shadow DOM, so the site's CSS cannot reach it. It carries its own copy of the
@@ -42,6 +44,8 @@ const UI_CSS = `
   .panel button:disabled { opacity: .4; cursor: default; }
   .tip { position: fixed; display: none; background: var(--yellow); color: var(--ink); border: var(--border); font-size: 12px; font-weight: 700; padding: 3px 10px; border-radius: 99px; pointer-events: none; animation: tipb 1s infinite alternate; }
   .tip::after { content: ""; position: absolute; left: 14px; bottom: -8px; border: 6px solid transparent; border-top-color: var(--ink); border-bottom: 0; }
+  .drop { position: fixed; transform: translate(-50%, -50%); background: var(--yellow); color: var(--ink); border: var(--border); border-radius: 99px; box-shadow: var(--shadow-sm); font: 700 13px var(--font-display); padding: 4px 12px; cursor: pointer; pointer-events: auto; white-space: nowrap; }
+  .drop:hover { background: var(--ink); color: var(--yellow); }
   @keyframes tipb { to { margin-top: -5px; } }
   .pin { position: fixed; width: 26px; height: 26px; margin: -13px 0 0 -13px; border-radius: 50%; background: var(--yellow); color: var(--ink); font: 700 12px var(--font-display); display: flex; align-items: center; justify-content: center; pointer-events: auto; cursor: pointer; border: var(--border); }
   .pin.done { background: var(--ink); color: #fff; }
@@ -52,6 +56,7 @@ const UI_CSS = `
     .toolbar .tagname { align-self: center; }
     .panel button { min-height: 44px; }
     .panel .linkbtn { min-height: 44px; }
+    .drop { min-height: 44px; padding: 4px 16px; }
     .pin { width: 32px; height: 32px; margin: -16px 0 0 -16px; font-size: 14px; }
   }
 `;
@@ -59,6 +64,7 @@ const UI_HTML = `
   <div class="box hover"></div><div class="box sel"></div>
   <div class="pins"></div>
   <div class="toolbar"></div>
+  <div class="drops"></div>
   <div class="tip">✎ Click here and type your new text</div>
   <div class="panel"></div>`;
 

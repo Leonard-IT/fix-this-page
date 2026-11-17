@@ -5,7 +5,7 @@ const { isSafeChange } = require('./core/annotator.js');
 const STORAGE_KEY = 'fixthis:feedback';
 const SESSION_ID = 'local';
 const ANNOTATION_STATUS = Object.freeze({ Open: 'open', Done: 'done' });
-const ANNOTATION_TYPES = Object.freeze(['comment', 'edit', 'clone', 'delete']);
+const ANNOTATION_TYPES = Object.freeze(['comment', 'edit', 'clone', 'move', 'delete']);
 
 /**
  * @param {{ storage: Storage, site: string, now: () => Date, createId: () => string }} deps

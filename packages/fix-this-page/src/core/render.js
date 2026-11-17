@@ -3,12 +3,13 @@
 // The prompt is a rendering of a Page Change Format document (spec/page-change-format.md, section 12).
 // Everything a client (or the scanned page) wrote is untrusted: it only ever goes into fenced blocks,
 // with a fence longer than any backtick run inside, so it cannot close the block and pose as instructions.
-const { ITEM_TYPE, CHANGE_TYPE, SELECTOR_TYPE, STATUS, PLACEMENT } = require('./pcf');
+const { ITEM_TYPE, CHANGE_TYPE, SELECTOR_TYPE, STATUS, PLACEMENT, MOVE_POSITIONS } = require('./pcf');
 
-const TYPE_LABEL = Object.freeze({ Comment: 'Comment', Edit: 'Edit', Duplicate: 'Duplicate block', Delete: 'Delete', Unknown: 'Item' });
+const TYPE_LABEL = Object.freeze({ Comment: 'Comment', Edit: 'Edit', Duplicate: 'Duplicate block', Move: 'Move block', Delete: 'Delete', Unknown: 'Item' });
 const LABEL_BY_ITEM_TYPE = Object.freeze({
   [ITEM_TYPE.Edit]: TYPE_LABEL.Edit,
   [ITEM_TYPE.Duplicate]: TYPE_LABEL.Duplicate,
+  [ITEM_TYPE.Move]: TYPE_LABEL.Move,
   [ITEM_TYPE.Delete]: TYPE_LABEL.Delete,
 });
 const SELF_PATH = '.';
@@ -101,8 +102,16 @@ function taskLine(item) {
   const hasChanges = (item.changes || []).length > 0;
   if (item.type === ITEM_TYPE.Delete) return 'Task: delete this element.';
   if (item.type === ITEM_TYPE.Duplicate) return duplicateTask(item, hasChanges);
+  if (item.type === ITEM_TYPE.Move) return moveTask(item);
   if (hasChanges) return '';
   return `Task: act on the client's comment for this ${isWholePage(item.target) ? 'page' : 'element'}, within the website's source only.`;
+}
+
+// This line is outside the fenced client data, so only a known position goes into it
+function moveTask(item) {
+  const position = item.placement && item.placement.position;
+  if (!MOVE_POSITIONS.includes(position)) return 'Task: move this block as the client asked. The destination is missing, so skip this item and report that.';
+  return `Task: move this block to directly ${position} the destination block below, keeping its content as it is.`;
 }
 
 function duplicateTask(item, hasChanges) {
@@ -118,8 +127,19 @@ function clientDataLines(item) {
   if (target.heading) lines.push(`section: ${quoted(target.heading)}`);
   if (selector) lines.push(`selector: ${oneLine(selector.value)}`);
   lines.push(...(item.changes || []).map(changeLine));
+  if (item.type === ITEM_TYPE.Move && item.placement && item.placement.target) lines.push(...destinationLines(item.placement.target));
   if (item.comment) lines.push(`comment: ${quoted(item.comment)}`, `author: ${quoted((item.author && item.author.name) || 'the client')}`);
   if (target.html) lines.push(`html: ${quoted(trunc(str(target.html), MAX_HTML_IN_PROMPT))}`);
+  return lines;
+}
+
+// The block a move goes next to, described like the block that moves
+function destinationLines(target) {
+  const selector = (target.selector || []).find((s) => s.type === SELECTOR_TYPE.Css);
+  const lines = [];
+  if (target.heading) lines.push(`destination section: ${quoted(target.heading)}`);
+  if (selector) lines.push(`destination selector: ${oneLine(selector.value)}`);
+  if (target.html) lines.push(`destination html: ${quoted(trunc(str(target.html), MAX_HTML_IN_PROMPT))}`);
   return lines;
 }
 
