@@ -8,7 +8,7 @@ Publishing is hard to undo: a published npm version can never be replaced, and t
 
 - [ ] Check that the package name `fix-this-page` is free on npm (`npm view fix-this-page` should answer 404), or that you own it.
 - [ ] Have an npm account with two-factor authentication on.
-- [ ] Decide whether the package belongs to your own account or to an npm organisation, and publish under that one.
+- [ ] Publish unscoped as `fix-this-page` (decided), and make an npm organisation the owner rather than a personal account, so a second maintainer can publish. Fall back to `@leonard-it/fix-this-page` only if the name turns out to be taken.
 - [ ] Check that the domain in `homepage` (`https://fixthis.page`) is yours and does something useful, or change the field.
 
 ## 2. Repository
@@ -24,6 +24,8 @@ Publishing is hard to undo: a published npm version can never be replaced, and t
 
 - [ ] Create an npm access token that may publish `fix-this-page` (a granular token limited to this package is best).
 - [ ] Add it to the GitHub repository as the secret `NPM_TOKEN` (Settings, Secrets and variables, Actions).
+- [ ] Make the repository public before the first release. npm only records provenance for a package built from a public repository, and `--provenance` fails on a private one.
+- [ ] Check that `repository.url` in `packages/fix-this-page/package.json` is exactly the GitHub repository the workflow runs in. npm compares them and rejects the publish when they differ.
 
 ## 4. Prepare the first version
 
