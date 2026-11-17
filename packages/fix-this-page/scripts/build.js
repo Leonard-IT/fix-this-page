@@ -2,6 +2,7 @@
 // the full overlay the loader adds to the page once it is switched on.
 const path = require('node:path');
 const fs = require('node:fs/promises');
+const fsSync = require('node:fs');
 const crypto = require('node:crypto');
 const esbuild = require('esbuild');
 const { OVERLAY_FILE } = require('../src/handoff.js');
@@ -10,7 +11,11 @@ const ROOT = path.join(__dirname, '..');
 const DIST = path.join(ROOT, 'dist');
 const LOADER_ENTRY = path.join(ROOT, 'src', 'index.js');
 const OVERLAY_ENTRY = path.join(ROOT, 'src', 'bundle.js');
+const SRC = path.join(ROOT, 'src');
 const LOADER_FILE = 'fixthis.js';
+const WATCH_FLAG = '--watch';
+// An editor saves a file in several writes; one rebuild after they settle is enough
+const REBUILD_DELAY_MS = 100;
 const MAP_EXTENSION = '.map';
 const INTEGRITY_ALGORITHM = 'sha384';
 // Browsers that support constructable stylesheets, AbortSignal on listeners and CSS.escape
@@ -66,10 +71,23 @@ async function writeFiles(...bundles) {
   return files;
 }
 
+const logBuilt = ({ files }) => console.log('Built ' + files.map((file) => path.relative(ROOT, file)).join(', '));
+
+/** Rebuilds when something under src/ changes. A failed rebuild is logged and the watcher keeps running. */
+function watchOverlay() {
+  let timer;
+  const rebuild = () => buildOverlay({ write: true }).then(logBuilt).catch((error) => console.error(error.message));
+  fsSync.watch(SRC, { recursive: true }, () => {
+    clearTimeout(timer);
+    timer = setTimeout(rebuild, REBUILD_DELAY_MS);
+  });
+  console.log('Watching src/ for changes');
+  return rebuild();
+}
+
 if (require.main === module) {
-  buildOverlay({ write: true })
-    .then(({ files }) => console.log('Built ' + files.map((file) => path.relative(ROOT, file)).join(', ')))
-    .catch((error) => { console.error(error); process.exitCode = 1; });
+  const run = process.argv.includes(WATCH_FLAG) ? watchOverlay() : buildOverlay({ write: true }).then(logBuilt);
+  run.catch((error) => { console.error(error); process.exitCode = 1; });
 }
 
 module.exports = { buildOverlay, integrityOf };
