@@ -87,7 +87,8 @@ function annotationIcon(annotation, size = ICON_SIZE) {
   return { label: isLinkEdit ? action.label : TYPE_LABEL[annotation.type] || action.label, svg: iconSvg(action.icon, size) };
 }
 
-function panelHtml({ title, text, html = '', fields = '', saveLabel = 'Save', collapseComment = false, saveDisabled = false, hint = '' }) {
+function panelHtml({ title, text, html = '', fields = '', saveLabel = 'Save', collapseComment = false, saveDisabled = false, hint = '', cancelOnly = false }) {
+  if (cancelOnly) return `<h3>${esc(title)}</h3>${text ? `<p>${esc(text)}</p>` : ''}<div class="row"><button data-x="cancel">Cancel</button></div>`;
   const noteLabel = collapseComment ? 'Note for the developer' : 'Comment (optional)';
   const notePlaceholder = collapseComment ? 'Why this change? This is NOT where the new text goes.' : 'Explanation for the developer';
   return `<h3>${esc(title)}</h3>${text ? `<p>${esc(text)}</p>` : ''}${html}${fields}

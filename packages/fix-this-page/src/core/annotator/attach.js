@@ -33,10 +33,7 @@ const PANEL_CONTROL = Object.freeze({
   Cancel: '[data-x="cancel"]', Save: '[data-x="save"]',
 });
 const HINT = Object.freeze({ Waiting: 'Waiting for your change…', Detected: 'Change detected ✓' });
-const MOVE_TEXT = Object.freeze({
-  Pick: 'Hover or tap the block it should go next to, then choose Before or After.',
-  Previewed: 'The block now sits at its new place. Pick another block to change it, or save.',
-});
+const MOVE_TEXT = Object.freeze({ Pick: 'Hover or tap the block it should go next to, then choose Before or After. The move is saved right away.' });
 
 /**
  * @typedef {{ selector: string, text: string, html: string, heading: string }} ElementDescription
@@ -368,17 +365,11 @@ function attach(doc, host) {
       closePanel();
       select(el);
     };
-    state.moving = { el, restore, cancel, placement: null };
+    state.moving = { el, restore, cancel, target };
     el.setAttribute(ATTR.Moving, '');
     clearSelection();
     openPanel({
-      title: 'Move block', text: MOVE_TEXT.Pick, saveLabel: 'Save move', collapseComment: true, saveDisabled: true,
-      onSave: async (field) => {
-        const annotation = await host.save({ type: ANNOTATION_TYPE.Move, target, placement: state.moving.placement, comment: field('comment').value.trim() });
-        state.moving = null;
-        afterSave(annotation, el, () => { el.removeAttribute(ATTR.Moved); restore(); });
-      },
-      onCancel: cancel,
+      title: 'Move block', text: MOVE_TEXT.Pick, cancelOnly: true, onCancel: cancel,
     });
   }
 
@@ -404,22 +395,27 @@ function attach(doc, host) {
     part(UI_PART.Drops).innerHTML = '';
   }
 
-  function chooseSpot(anchor, position) {
-    const { el, restore } = state.moving;
+  async function chooseSpot(anchor, position) {
+    const { el, restore, target } = state.moving;
     // The anchor is described on the page as it was, before the block is shown in its new place
     restore();
     // The choices were offered while an earlier choice was shown, so this one can be where the block started
     if (!positionsFor(el, anchor).includes(position)) return resetChoice(el);
-    state.moving.placement = { position, anchor: describeElement(anchor) };
+    const placement = { position, anchor: describeElement(anchor) };
     placeAt(el, anchor, position);
     el.removeAttribute(ATTR.Moving);
     el.setAttribute(ATTR.Moved, '');
     el.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
     clearDrops();
     hideBox(UI_PART.HoverBox);
-    const panel = part(UI_PART.Panel);
-    panel.querySelector('p').textContent = MOVE_TEXT.Previewed;
-    panel.querySelector(PANEL_CONTROL.Save).disabled = false;
+    try {
+      const annotation = await host.save({ type: ANNOTATION_TYPE.Move, target, placement });
+      state.moving = null;
+      closePanel();
+      afterSave(annotation, el, () => { el.removeAttribute(ATTR.Moved); restore(); });
+    } catch (error) {
+      host.notify('Saving failed: ' + error.message); // the block stays where it was shown, so another spot can be chosen
+    }
   }
 
   // Back to the start of a move: the block is where it began and nothing is chosen yet
@@ -496,7 +492,8 @@ function attach(doc, host) {
     const noteButton = panel.querySelector(PANEL_CONTROL.Note);
     if (noteButton) noteButton.onclick = () => revealNote(panel, noteButton);
     panel.querySelector(PANEL_CONTROL.Cancel).onclick = () => { closePanel(); if (onCancel) onCancel(); };
-    panel.querySelector(PANEL_CONTROL.Save).onclick = () => submitPanel(panel, () => onSave(field));
+    const save = panel.querySelector(PANEL_CONTROL.Save);
+    if (save) save.onclick = () => submitPanel(panel, () => onSave(field));
     // keys typed in the panel must not reach the page's Escape handling or the site's shortcuts
     panel.addEventListener('keydown', (event) => event.stopPropagation());
   }
