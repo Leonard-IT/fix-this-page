@@ -89,6 +89,15 @@ describe('PCF export and import', () => {
     });
   });
 
+  it('keeps the order of an imported duplicate', () => {
+    const example = readExample('duplicate.pagechange.json');
+    example.items[0].placement.order = 3;
+
+    const [annotation] = readFeedbackFile(example).data.annotations;
+
+    assert.equal(annotation.placement.order, 3);
+  });
+
   it('exports a move with the block it goes next to, and reads it back', () => {
     const store = newStore();
     store.add({ path: '/menu', url: SITE + '/menu' }, {

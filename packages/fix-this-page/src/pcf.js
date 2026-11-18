@@ -68,15 +68,18 @@ function toAnnotation(item) {
       viewport: target.viewport && { w: target.viewport.width, h: target.viewport.height },
     }),
     changes,
-    placement: item.type === ITEM_TYPE.Duplicate
-      ? { relative_to: RELATIVE_TO_SOURCE, position: PLACEMENT.Position, order: Number(item.placement && item.placement.order) || PLACEMENT.DefaultOrder }
-      : undefined,
-    placement: item.type === ITEM_TYPE.Move ? { position: item.placement.position, anchor: toElementData(item.placement.target) } : undefined,
+    placement: placementOf(item),
     comment: item.comment || '',
     author: (item.author && item.author.name) || '',
     status: item.status === STATUS.Done ? STATUS.Done : STATUS.Open,
     createdAt: item.created || '',
   };
+}
+
+function placementOf(item) {
+  if (item.type === ITEM_TYPE.Move) return { position: item.placement.position, anchor: toElementData(item.placement.target) };
+  if (item.type !== ITEM_TYPE.Duplicate) return undefined;
+  return { relative_to: RELATIVE_TO_SOURCE, position: PLACEMENT.Position, order: Number(item.placement && item.placement.order) || PLACEMENT.DefaultOrder };
 }
 
 // The overlay calls an edit that only has a comment a comment, and a duplicate a clone
