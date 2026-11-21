@@ -9,7 +9,7 @@ const MAX_TEXT_LENGTH = 300;
 const MAX_HEADING_LENGTH = 100;
 // The html anchor keeps what an agent can find in the source; see `snippet`
 const SNIPPET = Object.freeze({ MaxLength: 600, MaxDepth: 3, MaxText: 60, MaxAttributeValue: 100 });
-const SNIPPET_STRIPPED_ATTRS = Object.freeze([ATTR.Editable, ATTR.Deleted, ATTR.Clone, ATTR.Moving, ATTR.Moved]);
+const SNIPPET_STRIPPED_ATTRS = Object.freeze([ATTR.Editable, ATTR.Deleted, ATTR.Clone, ATTR.Moving, ATTR.Moved, ATTR.SwapPartner]);
 const ELLIPSIS = '…';
 const SVG_TAG = 'svg';
 const SVG_KEPT_ATTRS = Object.freeze(['class']);

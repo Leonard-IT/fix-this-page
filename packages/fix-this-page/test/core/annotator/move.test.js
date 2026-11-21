@@ -1,7 +1,9 @@
 const { describe, it } = require('node:test');
 const assert = require('node:assert/strict');
 
-const { POSITION, AXIS, flowAxis, canBeAnchor, positionsFor, choiceSpot, choiceLabel, placeAt } = require('../../../src/core/annotator/move');
+const {
+  POSITION, AXIS, flowAxis, canBeAnchor, positionsFor, choiceSpot, choiceLabel, hasDragStarted, dropPosition, dropLine, placeAt,
+} = require('../../../src/core/annotator/move');
 
 const BODY = { tagName: 'BODY' };
 const DOCUMENT = Object.freeze({ body: BODY, documentElement: { tagName: 'HTML' } });
@@ -99,6 +101,47 @@ describe('choiceLabel', () => {
   it('points the way the block is placed', () => {
     assert.equal(choiceLabel(AXIS.Column, POSITION.After), '↓ After');
     assert.equal(choiceLabel(AXIS.Row, POSITION.Before), '← Before');
+  });
+});
+
+describe('hasDragStarted', () => {
+  const start = { x: 100, y: 100 };
+
+  it('keeps a press that barely moves a click', () => {
+    assert.equal(hasDragStarted(start, { x: 103, y: 102 }), false);
+  });
+
+  it('starts a drag once the pointer has travelled', () => {
+    assert.equal(hasDragStarted(start, { x: 100, y: 106 }), true);
+    assert.equal(hasDragStarted(start, { x: 95, y: 96 }), true);
+  });
+});
+
+describe('dropPosition', () => {
+  const rect = { left: 100, right: 300, top: 200, bottom: 280, width: 200, height: 80 };
+
+  it('puts a stacked block before the anchor in its top half and after it in its bottom half', () => {
+    assert.equal(dropPosition(rect, AXIS.Column, { x: 290, y: 239 }), POSITION.Before);
+    assert.equal(dropPosition(rect, AXIS.Column, { x: 110, y: 240 }), POSITION.After);
+  });
+
+  it('puts a block in a row before the anchor in its left half and after it in its right half', () => {
+    assert.equal(dropPosition(rect, AXIS.Row, { x: 199, y: 270 }), POSITION.Before);
+    assert.equal(dropPosition(rect, AXIS.Row, { x: 200, y: 210 }), POSITION.After);
+  });
+});
+
+describe('dropLine', () => {
+  const rect = { left: 100, right: 300, top: 200, bottom: 280, width: 200, height: 80 };
+
+  it('draws a stacked drop across the top or bottom edge', () => {
+    assert.deepEqual(dropLine(rect, AXIS.Column, POSITION.Before), { left: 100, top: 198, width: 200, height: 4 });
+    assert.deepEqual(dropLine(rect, AXIS.Column, POSITION.After), { left: 100, top: 278, width: 200, height: 4 });
+  });
+
+  it('draws a drop in a row along the left or right edge', () => {
+    assert.deepEqual(dropLine(rect, AXIS.Row, POSITION.Before), { left: 98, top: 200, width: 4, height: 80 });
+    assert.deepEqual(dropLine(rect, AXIS.Row, POSITION.After), { left: 298, top: 200, width: 4, height: 80 });
   });
 });
 

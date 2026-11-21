@@ -6,6 +6,7 @@ const PAGE_CSS = `
   [${ATTR.Clone}] { outline: 2px dashed #0A0A0A !important; outline-offset: 2px; }
   [${ATTR.Moving}] { opacity: .3 !important; outline: 2px dashed #B00020 !important; outline-offset: 2px; }
   [${ATTR.Moved}] { outline: 2px dashed #0A0A0A !important; outline-offset: 2px; }
+  [${ATTR.SwapPartner}] { outline: 2px dashed #0A0A0A !important; outline-offset: 2px; cursor: pointer !important; }
   [${ATTR.Editable}="true"] { outline: 2px solid #0A0A0A !important; outline-offset: 2px; cursor: text !important; }
   * { cursor: default; }`;
 // The interface lives in a shadow DOM, so the site's CSS cannot reach it. It carries its own copy of the
@@ -46,6 +47,9 @@ const UI_CSS = `
   .tip::after { content: ""; position: absolute; left: 14px; bottom: -8px; border: 6px solid transparent; border-top-color: var(--ink); border-bottom: 0; }
   .drop { position: fixed; transform: translate(-50%, -50%); background: var(--yellow); color: var(--ink); border: var(--border); border-radius: 99px; box-shadow: var(--shadow-sm); font: 700 13px var(--font-display); padding: 4px 12px; cursor: pointer; pointer-events: auto; white-space: nowrap; }
   .drop:hover { background: var(--ink); color: var(--yellow); }
+  .dropline { position: fixed; background: var(--ink); border-radius: 2px; box-shadow: 0 0 0 2px var(--yellow); pointer-events: none; }
+  /* A finger dragging from the Move button drags the block instead of scrolling the page */
+  .toolbar button[data-a="move"] { touch-action: none; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
   @keyframes tipb { to { margin-top: -5px; } }
   .pin { position: fixed; width: 26px; height: 26px; margin: -13px 0 0 -13px; border-radius: 50%; background: var(--yellow); color: var(--ink); font: 700 12px var(--font-display); display: flex; align-items: center; justify-content: center; pointer-events: auto; cursor: pointer; border: var(--border); }
   .pin.done { background: var(--ink); color: #fff; }

@@ -3,6 +3,9 @@
 const { CLONE_SELECTOR, isAnnotatorElement, isPageElement } = require('./dom.js');
 
 const EDGE_MARGIN = 44;
+// A hand that only presses the button wobbles a little; that must stay a click
+const DRAG_DISTANCE = 6;
+const DROP_LINE_THICKNESS = 4;
 const POSITION = Object.freeze({ Before: 'before', After: 'after' });
 const AXIS = Object.freeze({ Row: 'x', Column: 'y' });
 const ROW_DIRECTIONS = Object.freeze(['row', 'row-reverse']);
@@ -58,6 +61,29 @@ function choiceLabel(axis, position) {
   return CHOICE_LABEL[axis][position];
 }
 
+/** Whether a press on the Move button has become a drag, rather than a click. */
+function hasDragStarted(start, point) {
+  return Math.hypot(point.x - start.x, point.y - start.y) >= DRAG_DISTANCE;
+}
+
+/** A dragged block goes on the side of the anchor the pointer is in: its first half is before, the rest after. */
+function dropPosition(rect, axis, point) {
+  const isInFirstHalf = axis === AXIS.Row
+    ? point.x < rect.left + rect.width / 2
+    : point.y < rect.top + rect.height / 2;
+  return isInFirstHalf ? POSITION.Before : POSITION.After;
+}
+
+/** The line that shows where a dragged block lands: across the anchor's leading or trailing edge. */
+function dropLine(rect, axis, position) {
+  const isBefore = position === POSITION.Before;
+  const half = DROP_LINE_THICKNESS / 2;
+  if (axis === AXIS.Row) {
+    return { left: (isBefore ? rect.left : rect.right) - half, top: rect.top, width: DROP_LINE_THICKNESS, height: rect.height };
+  }
+  return { left: rect.left, top: (isBefore ? rect.top : rect.bottom) - half, width: rect.width, height: DROP_LINE_THICKNESS };
+}
+
 function placeAt(el, anchor, position) {
   if (position === POSITION.Before) anchor.before(el);
   else anchor.after(el);
@@ -70,4 +96,7 @@ function rememberPosition(el) {
   return () => parent.insertBefore(el, next);
 }
 
-module.exports = { POSITION, AXIS, flowAxis, canBeAnchor, positionsFor, choiceSpot, choiceLabel, placeAt, rememberPosition };
+module.exports = {
+  POSITION, AXIS, flowAxis, canBeAnchor, positionsFor, choiceSpot, choiceLabel, hasDragStarted, dropPosition, dropLine, placeAt,
+  rememberPosition,
+};

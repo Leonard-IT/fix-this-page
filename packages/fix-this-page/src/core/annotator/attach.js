@@ -4,7 +4,10 @@ const { applyToPage, NOTHING_TO_REVERT } = require('./apply-to-page.js');
 const { applyChanges, invertChanges, isSafeChange } = require('./apply-changes.js');
 const { createClone, insertCloneAfter, clonesOf } = require('./clones.js');
 const { describeElement } = require('./describe-element.js');
-const { flowAxis, positionsFor, choiceSpot, choiceLabel, placeAt, rememberPosition } = require('./move.js');
+const { swapPartners, swapUnit, swapMoves } = require('./swap.js');
+const {
+  flowAxis, positionsFor, choiceSpot, choiceLabel, hasDragStarted, dropPosition, dropLine, placeAt, rememberPosition,
+} = require('./move.js');
 const {
   ATTR, CLONE_SELECTOR, LINK_SELECTOR, isHostControl, isPageElement, tagOf, norm, esc,
 } = require('./dom.js');
@@ -34,6 +37,10 @@ const PANEL_CONTROL = Object.freeze({
 });
 const HINT = Object.freeze({ Waiting: 'Waiting for your change…', Detected: 'Change detected ✓' });
 const MOVE_TEXT = Object.freeze({ Pick: 'Hover or tap the block it should go next to, then choose Before or After. The move is saved right away.' });
+const SWAP_TEXT = Object.freeze({
+  Pick: 'Click the outlined block it should trade places with. The swap is saved right away.',
+  NoPlace: 'These two blocks cannot be swapped here. Use Move instead.',
+});
 
 /**
  * @typedef {{ selector: string, text: string, html: string, heading: string }} ElementDescription
@@ -54,13 +61,14 @@ const MOVE_TEXT = Object.freeze({ Pick: 'Hover or tap the block it should go nex
 function attach(doc, host) {
   const win = doc.defaultView;
   // applied: what is shown in the page for each item, with how to take it out again
-  const state = { selected: null, editing: null, moving: null, pins: [], panelAnchor: null, applied: [] };
+  const state = { selected: null, editing: null, moving: null, swapping: null, pins: [], panelAnchor: null, applied: [] };
   const startAction = Object.freeze({
     [ACTION.Comment]: startComment,
     [ACTION.Edit]: startTextEdit,
     [ACTION.Link]: startLinkEdit,
     [ACTION.Clone]: startDuplicate,
     [ACTION.Move]: startMove,
+    [ACTION.Swap]: startSwap,
     [ACTION.Delete]: startDelete,
   });
   const listeners = new AbortController();
@@ -94,6 +102,7 @@ function attach(doc, host) {
   function detach() {
     if (state.editing) state.editing.cancel();
     if (state.moving) state.moving.cancel();
+    if (state.swapping) state.swapping.cancel();
     closePanel();
     revertApplied();
     listeners.abort();
@@ -121,7 +130,7 @@ function attach(doc, host) {
   }
 
   function isBusy() {
-    return Boolean(state.editing) || Boolean(state.moving) || isPanelOpen();
+    return Boolean(state.editing) || Boolean(state.moving) || Boolean(state.swapping) || isPanelOpen();
   }
 
   // ---------- page events ----------
@@ -145,6 +154,7 @@ function attach(doc, host) {
 
   function onHover(event) {
     if (state.moving) return isInterfaceEvent(event) ? undefined : offerPositions(event.target);
+    if (state.swapping) return isInterfaceEvent(event) ? undefined : showSwapPartner(event.target);
     if (isBusy() || isInterfaceEvent(event) || !isPageElement(event.target)) return hideBox(UI_PART.HoverBox);
     showBox(UI_PART.HoverBox, event.target);
   }
@@ -155,6 +165,7 @@ function attach(doc, host) {
     event.preventDefault();
     event.stopImmediatePropagation();
     if (state.moving) return offerPositions(event.target);
+    if (state.swapping) return chooseSwapPartner(event.target);
     if (isBusy()) return;
     const el = event.target;
     if (!isPageElement(el)) return clearSelection();
@@ -177,6 +188,7 @@ function attach(doc, host) {
     if (event.key !== KEY.Escape) return;
     if (state.editing) return state.editing.cancel();
     if (state.moving) return state.moving.cancel();
+    if (state.swapping) return state.swapping.cancel();
     if (isPanelOpen()) return closePanel();
     clearSelection();
   }
@@ -216,6 +228,8 @@ function attach(doc, host) {
     toolbar.querySelectorAll('button').forEach((button) => {
       button.onclick = (event) => { event.stopPropagation(); runAction(button.dataset.a); };
     });
+    const moveButton = toolbar.querySelector(`[data-a="${ACTION.Move}"]`);
+    if (moveButton) moveButton.onpointerdown = (event) => watchForDrag(moveButton, event, el);
   }
 
   function placeToolbar() {
@@ -354,6 +368,11 @@ function attach(doc, host) {
 
   // The block stays where it is until a spot is chosen; choosing shows it there, and saving keeps it there
   function startMove(el) {
+    beginMove(el);
+    openMovePanel();
+  }
+
+  function beginMove(el) {
     const target = describeElement(el);
     const restore = rememberPosition(el);
     const cancel = () => {
@@ -368,9 +387,77 @@ function attach(doc, host) {
     state.moving = { el, restore, cancel, target };
     el.setAttribute(ATTR.Moving, '');
     clearSelection();
+  }
+
+  function openMovePanel() {
     openPanel({
-      title: 'Move block', text: MOVE_TEXT.Pick, cancelOnly: true, onCancel: cancel,
+      title: 'Move block', text: MOVE_TEXT.Pick, cancelOnly: true, onCancel: state.moving.cancel,
     });
+  }
+
+  // A press on the Move button stays a click, which starts the two-step move, until the pointer travels;
+  // then the block is dragged and goes where it is let go
+  function watchForDrag(button, down, el) {
+    const start = pointOf(down);
+    button.setPointerCapture(down.pointerId);
+    button.onpointermove = (event) => {
+      if (!hasDragStarted(start, pointOf(event))) return;
+      button.onpointermove = null;
+      startDrag(el, event.pointerId);
+    };
+    button.onlostpointercapture = () => { button.onpointermove = null; };
+  }
+
+  // The pointer is captured by the layer's host from here on, so letting go is not also a click on the button
+  // and the toolbar can be hidden without ending the drag
+  function startDrag(el, pointerId) {
+    uiHost.setPointerCapture(pointerId);
+    beginMove(el);
+    const move = state.moving;
+    const dragEnd = new AbortController();
+    const options = { signal: dragEnd.signal };
+    // Escape can end the move halfway through a drag
+    const isStillDragging = () => {
+      if (state.moving === move) return true;
+      dragEnd.abort();
+      return false;
+    };
+    uiHost.addEventListener('pointermove', (event) => { if (isStillDragging()) showDrop(move, pointOf(event)); }, options);
+    uiHost.addEventListener('pointerup', () => { if (isStillDragging()) dropDragged(move); dragEnd.abort(); }, options);
+    uiHost.addEventListener('pointercancel', () => { if (isStillDragging()) move.cancel(); dragEnd.abort(); }, options);
+  }
+
+  function showDrop(move, point) {
+    move.drop = dropUnder(move.el, point);
+    if (!move.drop) {
+      hideBox(UI_PART.HoverBox);
+      return clearDrops();
+    }
+    const { anchor, axis, position } = move.drop;
+    const rect = anchor.getBoundingClientRect();
+    showBox(UI_PART.HoverBox, anchor);
+    const line = dropLine(rect, axis, position);
+    part(UI_PART.Drops).innerHTML = `<div class="dropline" style="left:${line.left}px;top:${line.top}px;width:${line.width}px;height:${line.height}px"></div>`;
+  }
+
+  // The block the pointer is over, and the side of it the pointer is on, if letting go there would move anything
+  function dropUnder(el, point) {
+    const anchor = doc.elementFromPoint(point.x, point.y);
+    const positions = anchor ? positionsFor(el, anchor) : [];
+    if (!positions.length) return null;
+    const axis = flowAxis(win.getComputedStyle(anchor.parentElement));
+    const position = dropPosition(anchor.getBoundingClientRect(), axis, point);
+    if (!positions.includes(position)) return null;
+    return { anchor, axis, position };
+  }
+
+  function dropDragged(move) {
+    if (!move.drop) return move.cancel();
+    chooseSpot(move.drop.anchor, move.drop.position);
+  }
+
+  function pointOf(event) {
+    return { x: event.clientX, y: event.clientY };
   }
 
   // The choices appear on the block the pointer is over, on its edges
@@ -415,6 +502,8 @@ function attach(doc, host) {
       afterSave(annotation, el, () => { el.removeAttribute(ATTR.Moved); restore(); });
     } catch (error) {
       host.notify('Saving failed: ' + error.message); // the block stays where it was shown, so another spot can be chosen
+      // A drag has no panel yet; without one there would be no way to choose again or cancel
+      if (!isPanelOpen()) openMovePanel();
     }
   }
 
@@ -428,6 +517,66 @@ function attach(doc, host) {
     const panel = part(UI_PART.Panel);
     panel.querySelector('p').textContent = MOVE_TEXT.Pick;
     panel.querySelector(PANEL_CONTROL.Save).disabled = true;
+  }
+
+  // The look-alikes are outlined; clicking one trades places with it and saves the swap as moves
+  function startSwap(el) {
+    const partners = swapPartners(el);
+    partners.forEach((partner) => partner.setAttribute(ATTR.SwapPartner, ''));
+    el.setAttribute(ATTR.Moving, '');
+    clearSelection();
+    const end = () => {
+      partners.forEach((partner) => partner.removeAttribute(ATTR.SwapPartner));
+      el.removeAttribute(ATTR.Moving);
+      hideBox(UI_PART.HoverBox);
+      state.swapping = null;
+      closePanel();
+    };
+    const cancel = () => { end(); select(el); };
+    state.swapping = { el, partners, end, cancel };
+    openPanel({ title: 'Swap block', text: SWAP_TEXT.Pick, cancelOnly: true, onCancel: cancel });
+  }
+
+  // Look-alikes can be nested; the innermost one under the pointer is meant, and it comes last in page order
+  function swapPartnerAt(node) {
+    return state.swapping.partners.filter((partner) => partner.contains(node)).pop();
+  }
+
+  function showSwapPartner(node) {
+    const partner = swapPartnerAt(node);
+    if (!partner) return hideBox(UI_PART.HoverBox);
+    showBox(UI_PART.HoverBox, partner);
+  }
+
+  async function chooseSwapPartner(node) {
+    const partner = swapPartnerAt(node);
+    if (!partner) return;
+    const { el, end } = state.swapping;
+    const moves = swapMoves(swapUnit(el, partner), swapUnit(partner, el));
+    if (!moves.length) return host.notify(SWAP_TEXT.NoPlace);
+    end();
+    for (const move of moves) {
+      if (!(await saveMove(move))) return;
+    }
+  }
+
+  // Each move is described on the page as it is at that moment, after the moves before it, as consumers apply them
+  async function saveMove({ el, anchor, position }) {
+    const target = describeElement(el);
+    const placement = { position, anchor: describeElement(anchor) };
+    const restore = rememberPosition(el);
+    const takeOut = () => { el.removeAttribute(ATTR.Moved); restore(); };
+    placeAt(el, anchor, position);
+    el.setAttribute(ATTR.Moved, '');
+    try {
+      const annotation = await host.save({ type: ANNOTATION_TYPE.Move, target, placement });
+      afterSave(annotation, el, takeOut);
+      return true;
+    } catch (error) {
+      takeOut();
+      host.notify('Saving failed: ' + error.message);
+      return false;
+    }
   }
 
   function startDelete(el) {

@@ -2,16 +2,18 @@
 const { ANNOTATION_TYPE, TYPE_LABEL, CHANGE_KIND } = require('./annotation-types.js');
 const { ATTR, UI_TAG, LINK_SELECTOR, esc } = require('./dom.js');
 const { UI_CSS, UI_HTML } = require('./styles.js');
+const { swapPartners } = require('./swap.js');
 
 const ACTION = Object.freeze({
-  Comment: 'comment', Edit: 'edit', Link: 'link', Clone: 'clone', Move: 'move', Delete: 'delete', Parent: 'parent', Close: 'close',
+  Comment: 'comment', Edit: 'edit', Link: 'link', Clone: 'clone', Move: 'move', Swap: 'swap', Delete: 'delete', Parent: 'parent', Close: 'close',
 });
 const TOOLBAR_ACTIONS = Object.freeze([
   { id: ACTION.Comment, label: 'Comment', icon: '<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>' },
   { id: ACTION.Edit, label: 'Edit text', icon: '<path d="M4 7V4h16v3M9 20h6M12 4v16"/>' },
   { id: ACTION.Link, label: 'Link', icon: '<path d="M10 13a5 5 0 0 0 7.07 0l3-3a5 5 0 0 0-7.07-7.07l-1.5 1.5M14 11a5 5 0 0 0-7.07 0l-3 3a5 5 0 0 0 7.07 7.07l1.5-1.5"/>' },
   { id: ACTION.Clone, label: 'Duplicate', icon: '<rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>' },
-  { id: ACTION.Move, label: 'Move', icon: '<path d="M5 9l-3 3 3 3M9 5l3-3 3 3M15 19l-3 3-3-3M19 9l3 3-3 3M2 12h20M12 2v20"/>' },
+  { id: ACTION.Move, label: 'Move: click, or press and drag', icon: '<path d="M5 9l-3 3 3 3M9 5l3-3 3 3M15 19l-3 3-3-3M19 9l3 3-3 3M2 12h20M12 2v20"/>' },
+  { id: ACTION.Swap, label: 'Swap with a block like this', icon: '<path d="M7 3 3 7l4 4M3 7h14M17 21l4-4-4-4M21 17H7"/>' },
   { id: ACTION.Delete, label: 'Delete', icon: '<path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6M10 11v6M14 11v6"/>' },
   { id: ACTION.Parent, label: 'Select the surrounding block', icon: '<rect x="3" y="3" width="18" height="18" rx="3" stroke-dasharray="3 3"/><rect x="8" y="8" width="8" height="8" rx="1.5"/>' },
   { id: ACTION.Close, label: 'Close', icon: '<path d="M18 6 6 18M6 6l12 12"/>' },
@@ -104,6 +106,7 @@ function resetPanelPosition(panel) {
 function isActionAvailable(action, el) {
   if (action === ACTION.Link) return Boolean(el.closest(LINK_SELECTOR));
   if (action === ACTION.Parent) return hasSelectableParent(el);
+  if (action === ACTION.Swap) return swapPartners(el).length > 0;
   return true;
 }
 

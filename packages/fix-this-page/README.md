@@ -1,6 +1,6 @@
 # fix-this-page
 
-Let people give feedback on your site by pointing at things and changing them directly: comment on an element, edit its text, change a link, duplicate or move a block, or mark it for deletion. You get the result as a prompt for your AI coding agent.
+Let people give feedback on your site by pointing at things and changing them directly: comment on an element, edit its text, change a link, duplicate, move or swap a block, or mark it for deletion. You get the result as a prompt for your AI coding agent.
 
 It runs on your own pages, in development and on the live site, and stays out of the way until someone adds `?fix` to the address. Nothing is sent anywhere: the feedback stays in the browser of whoever gives it.
 
@@ -122,7 +122,7 @@ Under a Content Security Policy, `script-src` must allow both files. The overlay
 ## Give feedback
 
 1. Open any page of the site with `?fix` added to the address, for example `https://example.com/pricing?fix`. The overlay then stays on in that browser tab, also on other pages, until it is closed with the close button in its dock.
-2. Click anything on the page to comment on it, edit its text, change a link, duplicate it, move it or mark it for deletion. Clicks go to the overlay while it is on, so links and buttons of the site do nothing.
+2. Click anything on the page to comment on it, edit its text, change a link, duplicate it, move it, swap it with a block like it, or mark it for deletion. Clicks go to the overlay while it is on, so links and buttons of the site do nothing.
 3. Send the feedback to the developer: **Copy link** gives a link that carries the feedback, to paste into any chat or email. **Save as a file** gives a file the developer can open with **Open a file** in their own browser, also on a development site. **Copy for an AI tool** gives the prompt for an AI coding agent.
 
 The exported file is a [Page Change Format](../../spec/page-change-format.md) (PCF) 0.1 document, named after the site and the time, such as `example.com-2026-11-13-1432.pagechange.json`: an open JSON format for requested changes to a web page, so other tools can read it. Import reads PCF documents and files from earlier versions of the overlay. Items are matched to pages by path, not by host. Items the overlay cannot show, such as an item type from a later PCF version, are skipped and counted.
