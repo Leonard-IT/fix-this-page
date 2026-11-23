@@ -33,7 +33,7 @@ function createOverlay({ win, storage, now, createId, onClose }) {
 
   function open() {
     if (session) return;
-    const annotator = attach(doc, { save, onSaved: renderDock, onPinClick: (id) => session.dock.flash(id), notify });
+    const annotator = attach(doc, { save, replace, onSaved: renderDock, onPinClick: (id) => session.dock.flash(id), notify });
     const dock = createDock(doc, onDockAction, importFile);
     session = { annotator, dock, observer: null, settleTimer: null, path: currentPath(), stopListening: null };
     session.observer = new win.MutationObserver(onPageMutation);
@@ -125,6 +125,13 @@ function createOverlay({ win, storage, now, createId, onClose }) {
     const page = { path: session.path, url: win.location.origin + session.path };
     const target = { url: session.path, viewport: { w: win.innerWidth, h: win.innerHeight }, ...draft.target };
     return store.add(page, { ...draft, target });
+  }
+
+  // The new item is stored before the old one is taken out, so a failure never loses the copy
+  async function replace(id, draft) {
+    const annotation = await save(draft);
+    store.remove(id);
+    return annotation;
   }
 
   function notify(message) {

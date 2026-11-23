@@ -3,6 +3,7 @@ const { ANNOTATION_TYPE, TYPE_LABEL, isDone } = require('./annotation-types.js')
 const { applyToPage, NOTHING_TO_REVERT } = require('./apply-to-page.js');
 const { applyChanges, invertChanges, isSafeChange } = require('./apply-changes.js');
 const { createClone, insertCloneAfter, clonesOf } = require('./clones.js');
+const { rebaseChanges, mergeChanges } = require('./copy-edits.js');
 const { describeElement } = require('./describe-element.js');
 const { swapPartners, swapUnit, swapMoves } = require('./swap.js');
 const {
@@ -48,6 +49,7 @@ const SWAP_TEXT = Object.freeze({
  * @typedef {object} Host
  * @property {(draft: Draft) => Promise<object>} save  stores the item and answers the stored annotation (with id and number)
  * @property {(annotation: object) => void} onSaved
+ * @property {(annotationId: string, draft: Draft) => Promise<object>} replace  stores the draft in place of an item, and answers the new item
  * @property {(annotationId: string) => void} onPinClick
  * @property {(message: string) => void} notify
  */
@@ -169,7 +171,6 @@ function attach(doc, host) {
     if (isBusy()) return;
     const el = event.target;
     if (!isPageElement(el)) return clearSelection();
-    if (el.closest(CLONE_SELECTOR)) return host.notify('This is a copy. Change it via its item in the list, or delete that item.');
     select(el);
   }
 
@@ -179,7 +180,7 @@ function attach(doc, host) {
     event.stopImmediatePropagation();
     if (isBusy()) return;
     const el = event.target;
-    if (!isPageElement(el) || el.closest(CLONE_SELECTOR)) return;
+    if (!isPageElement(el)) return;
     select(el);
     runAction(ACTION.Edit);
   }
@@ -300,8 +301,7 @@ function attach(doc, host) {
         if (!changes.length && !comment) throw new Error('Nothing has changed');
         el.removeAttribute(ATTR.Editable);
         state.editing = null;
-        const annotation = await host.save({ type: ANNOTATION_TYPE.Edit, target, changes, comment });
-        afterSave(annotation, el, () => { el.innerHTML = originalHtml; });
+        await saveEdit({ el, target, changes, comment }, () => { el.innerHTML = originalHtml; });
       },
       onCancel: cancel,
     });
@@ -330,40 +330,32 @@ function attach(doc, host) {
         const target = describeElement(link);
         const previewed = previewableLinkChanges(original, changes);
         applyChanges(link, previewed);
-        const annotation = await host.save({ type: ANNOTATION_TYPE.Edit, target, changes, comment });
-        afterSave(annotation, link, () => applyChanges(link, invertChanges(previewed)));
+        await saveEdit({ el: link, target, changes, comment }, () => applyChanges(link, invertChanges(previewed)));
       },
       onCancel: () => select(el),
     });
   }
 
-  function startDuplicate(el) {
+  // The copy is saved at once; after that its parts are changed like those of any other block
+  async function startDuplicate(el) {
     const target = describeElement(el);
     const order = clonesOf(doc, target.selector).length + 1;
-    const before = elementTexts(el);
     const copy = createClone(el, NEW_CLONE_ID, target.selector);
     insertCloneAfter(el, copy);
-    copy.setAttribute(ATTR.Editable, 'true');
     copy.scrollIntoView({ block: 'center', behavior: 'smooth' });
     clearSelection();
-    const cancel = () => { copy.remove(); state.editing = null; closePanel(); select(el); };
-    state.editing = { el: copy, cancel };
-    openPanel({
-      anchor: copy, title: 'Duplicate block', text: "The copy is outlined in green below the original. Change the copy's texts and click Save.",
-      saveLabel: 'Save copy',
-      onSave: async (field) => {
-        copy.removeAttribute(ATTR.Editable);
-        const changes = diffTexts(before, elementTexts(copy));
-        state.editing = null;
-        const annotation = await host.save({
-          type: ANNOTATION_TYPE.Clone, target, changes, comment: field('comment').value.trim(),
-          placement: { ...CLONE_PLACEMENT, order },
-        });
-        copy.setAttribute(ATTR.Clone, annotation.id);
-        afterSave(annotation, copy, () => copy.remove());
-      },
-      onCancel: cancel,
-    });
+    try {
+      const annotation = await host.save({
+        type: ANNOTATION_TYPE.Clone, target, changes: [], comment: '', placement: { ...CLONE_PLACEMENT, order },
+      });
+      copy.setAttribute(ATTR.Clone, annotation.id);
+      afterSave(annotation, copy, () => copy.remove());
+      select(copy);
+    } catch (error) {
+      copy.remove();
+      host.notify('Saving failed: ' + error.message);
+      select(el);
+    }
   }
 
   // The block stays where it is until a spot is chosen; choosing shows it there, and saving keeps it there
@@ -591,6 +583,38 @@ function attach(doc, host) {
       },
       onCancel: () => { el.removeAttribute(ATTR.Deleted); select(el); },
     });
+  }
+
+  // A change inside a copy goes into the item that made the copy, which is saved again with the change added
+  async function saveEdit({ el, target, changes, comment }, revert) {
+    const copy = el.closest(CLONE_SELECTOR);
+    if (copy) return saveCopyEdit(copy, el, changes, comment);
+    const annotation = await host.save({ type: ANNOTATION_TYPE.Edit, target, changes, comment });
+    afterSave(annotation, el, revert);
+  }
+
+  async function saveCopyEdit(copy, el, changes, comment) {
+    const shown = state.applied.find((applied) => applied.annotation.id === copy.getAttribute(ATTR.Clone));
+    if (!shown) throw new Error('This copy is not saved yet');
+    const { annotation: previous } = shown;
+    const annotation = await host.replace(previous.id, {
+      type: ANNOTATION_TYPE.Clone,
+      target: previous.target,
+      changes: mergeChanges(previous.changes, rebaseChanges(changes, el, copy)),
+      comment: [previous.comment, comment].filter(Boolean).join('\n'),
+      placement: previous.placement,
+    });
+    forget(shown);
+    copy.setAttribute(ATTR.Clone, annotation.id);
+    afterSave(annotation, copy, shown.revert);
+  }
+
+  function forget(shown) {
+    state.applied = state.applied.filter((applied) => applied !== shown);
+    const pin = state.pins.find((p) => p.annotation.id === shown.annotation.id);
+    if (!pin) return;
+    pin.node.remove();
+    state.pins = state.pins.filter((p) => p !== pin);
   }
 
   function afterSave(annotation, el, revert) {

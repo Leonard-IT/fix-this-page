@@ -1,6 +1,6 @@
 // The annotation layer's own interface: the toolbar buttons, the panel's markup, and mounting it in the page.
 const { ANNOTATION_TYPE, TYPE_LABEL, CHANGE_KIND } = require('./annotation-types.js');
-const { ATTR, UI_TAG, LINK_SELECTOR, esc } = require('./dom.js');
+const { ATTR, UI_TAG, CLONE_SELECTOR, LINK_SELECTOR, esc } = require('./dom.js');
 const { UI_CSS, UI_HTML } = require('./styles.js');
 const { swapPartners } = require('./swap.js');
 
@@ -18,6 +18,8 @@ const TOOLBAR_ACTIONS = Object.freeze([
   { id: ACTION.Parent, label: 'Select the surrounding block', icon: '<rect x="3" y="3" width="18" height="18" rx="3" stroke-dasharray="3 3"/><rect x="8" y="8" width="8" height="8" rx="1.5"/>' },
   { id: ACTION.Close, label: 'Close', icon: '<path d="M18 6 6 18M6 6l12 12"/>' },
 ]);
+// Inside a copy only texts and links can be changed: a target always refers to the original page
+const COPY_ACTIONS = Object.freeze([ACTION.Edit, ACTION.Link, ACTION.Parent, ACTION.Close]);
 const ICON_SIZE = 16;
 // On a live page the site's own handlers must not see these while the layer is active.
 // Default actions stay, so focus and text selection keep working.
@@ -104,6 +106,7 @@ function resetPanelPosition(panel) {
 }
 
 function isActionAvailable(action, el) {
+  if (el.closest(CLONE_SELECTOR) && !COPY_ACTIONS.includes(action)) return false;
   if (action === ACTION.Link) return Boolean(el.closest(LINK_SELECTOR));
   if (action === ACTION.Parent) return hasSelectableParent(el);
   if (action === ACTION.Swap) return swapPartners(el).length > 0;
@@ -111,7 +114,7 @@ function isActionAvailable(action, el) {
 }
 
 function hasSelectableParent(el) {
-  return Boolean(el.parentElement) && el.parentElement !== el.ownerDocument.body;
+  return Boolean(el.parentElement) && el.parentElement !== el.ownerDocument.body && !el.hasAttribute(ATTR.Clone);
 }
 
 module.exports = {
