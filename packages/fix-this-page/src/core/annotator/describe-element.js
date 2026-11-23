@@ -11,6 +11,7 @@ const MAX_HEADING_LENGTH = 100;
 const SNIPPET = Object.freeze({ MaxLength: 600, MaxDepth: 3, MaxText: 60, MaxAttributeValue: 100 });
 const SNIPPET_STRIPPED_ATTRS = Object.freeze([ATTR.Editable, ATTR.Deleted, ATTR.Clone, ATTR.Moving, ATTR.Moved, ATTR.SwapPartner]);
 const ELLIPSIS = '…';
+const INLINE_TAGS = new Set(['A', 'ABBR', 'B', 'BDI', 'BDO', 'CODE', 'EM', 'I', 'MARK', 'S', 'SMALL', 'SPAN', 'STRONG', 'SUB', 'SUP', 'U']);
 const SVG_TAG = 'svg';
 const SVG_KEPT_ATTRS = Object.freeze(['class']);
 const VOID_TAGS = new Set(['area', 'base', 'br', 'col', 'embed', 'hr', 'img', 'input', 'link', 'meta', 'source', 'track', 'wbr']);
@@ -26,10 +27,25 @@ const ESCAPED_IN_ATTRIBUTE = /[&"]/g;
 function describeElement(el) {
   return {
     selector: selectorFor(el),
-    text: norm(el.textContent).slice(0, MAX_TEXT_LENGTH),
+    text: readableText(el).slice(0, MAX_TEXT_LENGTH),
     html: snippet(el),
     heading: nearestHeading(el),
   };
+}
+
+/**
+ * The text of an element as a person reads it. `textContent` glues the text of neighbouring blocks together, such as
+ * an avatar letter and the name next to it ("MMichiel"), so a block boundary counts as a space.
+ */
+function readableText(el) {
+  return norm(textOf(el));
+}
+
+function textOf(node) {
+  if (node.nodeType === NODE_TYPE.Text) return node.nodeValue;
+  if (node.nodeType !== NODE_TYPE.Element || SKIPPED_TAGS.has(node.tagName) || isAnnotatorElement(node)) return '';
+  const inner = [...node.childNodes].map(textOf).join('');
+  return INLINE_TAGS.has(node.tagName) ? inner : ` ${inner} `;
 }
 
 // The heading of the section the element is in: the nearest heading before it, at the same level or higher up the tree
@@ -101,4 +117,4 @@ function escapeHtml(text, pattern) {
   return text.replace(pattern, (c) => HTML_ESCAPES[c]);
 }
 
-module.exports = { describeElement, snippet };
+module.exports = { describeElement, snippet, readableText };

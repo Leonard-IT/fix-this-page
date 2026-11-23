@@ -1,7 +1,7 @@
 const { describe, it } = require('node:test');
 const assert = require('node:assert/strict');
 
-const { snippet } = require('../../../src/core/annotator/describe-element');
+const { snippet, readableText } = require('../../../src/core/annotator/describe-element');
 
 describe('snippet', () => {
   // Just enough of a DOM node for the snippet
@@ -49,5 +49,22 @@ describe('snippet', () => {
 
   it('escapes the characters the markup needs', () => {
     assert.equal(snippet(el('a', { title: 'Say "hi" & go' }, 'a < b & c')), '<a title="Say &quot;hi&quot; &amp; go">a &lt; b &amp; c</a>');
+  });
+});
+
+describe('readableText', () => {
+  const node = (tag, ...childNodes) => ({
+    nodeType: 1, tagName: tag.toUpperCase(), hasAttribute: () => false,
+    childNodes: childNodes.map((child) => (typeof child === 'string' ? { nodeType: 3, nodeValue: child } : child)),
+  });
+
+  it('keeps the text of neighbouring blocks apart', () => {
+    const card = node('article', node('span', 'M'), node('div', node('h3', 'Michiel')), node('p', 'Hij is blij.'));
+
+    assert.equal(readableText(card), 'M Michiel Hij is blij.');
+  });
+
+  it('does not split a word at inline markup', () => {
+    assert.equal(readableText(node('p', 'Hel', node('b', 'lo'), ' world')), 'Hello world');
   });
 });
