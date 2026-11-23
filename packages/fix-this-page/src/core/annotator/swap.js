@@ -82,4 +82,25 @@ function placeOf(el) {
   return null;
 }
 
-module.exports = { looksAlike, canSwap, swapPartners, swapUnit, swapMoves };
+// The candidates' ring (outline and the gap before it) reaches this far outside the block
+const RING_SIZE = 7;
+
+function isInside(inner, outer) {
+  return inner !== outer && inner.left >= outer.left && inner.top >= outer.top
+    && inner.left + inner.width <= outer.left + outer.width && inner.top + inner.height <= outer.top + outer.height;
+}
+
+/**
+ * A clip path that covers the whole viewport except a ring-sized margin around each given rectangle, so the page
+ * can be washed out with the swap candidates left as they are. A rectangle inside another one is left out: with the
+ * even-odd rule it would fill the hole again.
+ * @param {{ width: number, height: number }} viewport
+ * @param {{ left: number, top: number, width: number, height: number }[]} rects
+ */
+function veilPath(viewport, rects) {
+  const holes = rects.filter((rect) => !rects.some((other) => isInside(rect, other)))
+    .map((r) => `M${r.left - RING_SIZE} ${r.top - RING_SIZE}h${r.width + 2 * RING_SIZE}v${r.height + 2 * RING_SIZE}h${-(r.width + 2 * RING_SIZE)}Z`);
+  return `path(evenodd, 'M0 0H${viewport.width}V${viewport.height}H0Z${holes.join('')}')`;
+}
+
+module.exports = { veilPath, looksAlike, canSwap, swapPartners, swapUnit, swapMoves };

@@ -2,7 +2,7 @@ const { describe, it } = require('node:test');
 const assert = require('node:assert/strict');
 
 const { POSITION } = require('../../../src/core/annotator/move');
-const { looksAlike, canSwap, swapUnit, swapMoves } = require('../../../src/core/annotator/swap');
+const { veilPath, looksAlike, canSwap, swapUnit, swapMoves } = require('../../../src/core/annotator/swap');
 
 const DOCUMENT = { body: null, documentElement: null };
 
@@ -146,5 +146,23 @@ describe('swapMoves', () => {
     page(node('div', [], [a]), node('div', [], [b]));
 
     assert.deepEqual(swapMoves(a, b), []);
+  });
+});
+
+describe('veilPath', () => {
+  const viewport = { width: 100, height: 80 };
+
+  it('cuts a ring-sized hole around each rectangle', () => {
+    assert.equal(
+      veilPath(viewport, [{ left: 20, top: 20, width: 30, height: 10 }]),
+      "path(evenodd, 'M0 0H100V80H0ZM13 13h44v24h-44Z')",
+    );
+  });
+
+  it('leaves out a rectangle inside another, which would fill its hole again', () => {
+    const outer = { left: 10, top: 10, width: 60, height: 50 };
+    const inner = { left: 20, top: 20, width: 10, height: 10 };
+
+    assert.equal(veilPath(viewport, [outer, inner]), veilPath(viewport, [outer]));
   });
 });

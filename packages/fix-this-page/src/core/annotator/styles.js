@@ -6,7 +6,9 @@ const PAGE_CSS = `
   [${ATTR.Clone}] { outline: 2px dashed #0A0A0A !important; outline-offset: 2px; }
   [${ATTR.Moving}] { opacity: .3 !important; outline: 2px dashed #B00020 !important; outline-offset: 2px; }
   [${ATTR.Moved}] { outline: 2px dashed #0A0A0A !important; outline-offset: 2px; }
-  [${ATTR.SwapPartner}] { outline: 2px dashed #0A0A0A !important; outline-offset: 2px; cursor: pointer !important; }
+  [${ATTR.SwapPartner}] { outline: 4px dashed #0A0A0A !important; outline-offset: 3px !important; box-shadow: 0 0 0 7px #FFFFFF !important; cursor: pointer !important; }
+  /* The rule below sets a cursor on every element, so the parts inside a candidate need their own */
+  [${ATTR.SwapPartner}] * { cursor: pointer !important; }
   [${ATTR.Editable}="true"] { outline: 2px solid #0A0A0A !important; outline-offset: 2px; cursor: text !important; }
   * { cursor: default; }`;
 // The interface lives in a shadow DOM, so the site's CSS cannot reach it. It carries its own copy of the
@@ -17,6 +19,10 @@ const UI_CSS = `
   :focus-visible { outline: 3px solid var(--ink); outline-offset: 2px; }
   .box { position: fixed; pointer-events: none; border-radius: 4px; display: none; }
   .hover { outline: 2px dashed var(--ink); background: rgba(255,225,77,.25); }
+  .hover.swap { outline: none; background: none; }
+  .hover.swap::after { content: '⇄ Swap here'; position: absolute; top: -13px; right: 12px; background: var(--ink); color: var(--yellow); font: 700 12px var(--font-display); padding: 3px 10px; border-radius: 99px; white-space: nowrap; }
+  /* Washes out the page but not the swap candidates, which are cut out of it (see swap.js, veilPath) */
+  .veil { position: fixed; inset: 0; display: none; pointer-events: none; background: rgba(255,255,255,.6); backdrop-filter: grayscale(1); }
   .sel { outline: 2px solid var(--ink); background: rgba(255,225,77,.4); }
   .toolbar { position: fixed; display: none; gap: 4px; padding: 4px; background: var(--paper); border: var(--border); border-radius: var(--radius-sm); pointer-events: auto; box-shadow: var(--shadow-sm); flex-wrap: wrap; max-width: 560px; }
   .toolbar button { all: unset; cursor: pointer; color: var(--ink); font-size: 13px; font-weight: 600; padding: 6px 8px; border-radius: 7px; display: inline-flex; align-items: center; }
@@ -65,7 +71,7 @@ const UI_CSS = `
   }
 `;
 const UI_HTML = `
-  <div class="box hover"></div><div class="box sel"></div>
+  <div class="veil"></div><div class="box hover"></div><div class="box sel"></div>
   <div class="pins"></div>
   <div class="toolbar"></div>
   <div class="drops"></div>

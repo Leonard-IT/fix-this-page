@@ -5,7 +5,7 @@ const { applyChanges, invertChanges, isSafeChange } = require('./apply-changes.j
 const { createClone, insertCloneAfter, clonesOf } = require('./clones.js');
 const { rebaseChanges, mergeChanges } = require('./copy-edits.js');
 const { describeElement } = require('./describe-element.js');
-const { swapPartners, swapUnit, swapMoves } = require('./swap.js');
+const { swapPartners, swapUnit, swapMoves, veilPath } = require('./swap.js');
 const {
   flowAxis, positionsFor, choiceSpot, choiceLabel, hasDragStarted, dropPosition, dropLine, placeAt, rememberPosition,
 } = require('./move.js');
@@ -30,12 +30,14 @@ const REVEAL_HIGHLIGHT_MS = 1200;
 const KEY = Object.freeze({ Escape: 'Escape' });
 const DISPLAY = Object.freeze({ None: 'none', Block: 'block', Flex: 'flex' });
 const UI_PART = Object.freeze({
-  HoverBox: '.hover', SelectionBox: '.sel', Pins: '.pins', Drops: '.drops', Toolbar: '.toolbar', Tip: '.tip', Panel: '.panel',
+  Veil: '.veil', HoverBox: '.hover', SelectionBox: '.sel', Pins: '.pins', Drops: '.drops', Toolbar: '.toolbar', Tip: '.tip', Panel: '.panel',
 });
 const PANEL_CONTROL = Object.freeze({
   Note: '[data-x="note"]', NoteBox: '[data-x="notebox"]', Hint: '[data-x="hint"]', StepTwo: '[data-x="n2"]',
   Cancel: '[data-x="cancel"]', Save: '[data-x="save"]',
 });
+// Marks the hover box while it shows a swap candidate, so it carries the "Swap here" label
+const SWAP_BOX_CLASS = 'swap';
 const HINT = Object.freeze({ Waiting: 'Waiting for your change…', Detected: 'Change detected ✓' });
 const MOVE_TEXT = Object.freeze({ Pick: 'Hover or tap the block it should go next to, then choose Before or After. The move is saved right away.' });
 const SWAP_TEXT = Object.freeze({
@@ -203,6 +205,7 @@ function attach(doc, host) {
     placePanel();
     hideBox(UI_PART.HoverBox);
     clearDrops();
+    if (state.swapping) showVeil();
   }
 
   function isInterfaceEvent(event) {
@@ -519,6 +522,8 @@ function attach(doc, host) {
     clearSelection();
     const end = () => {
       partners.forEach((partner) => partner.removeAttribute(ATTR.SwapPartner));
+      part(UI_PART.HoverBox).classList.remove(SWAP_BOX_CLASS);
+      part(UI_PART.Veil).style.display = DISPLAY.None;
       el.removeAttribute(ATTR.Moving);
       hideBox(UI_PART.HoverBox);
       state.swapping = null;
@@ -526,7 +531,16 @@ function attach(doc, host) {
     };
     const cancel = () => { end(); select(el); };
     state.swapping = { el, partners, end, cancel };
+    showVeil();
     openPanel({ title: 'Swap block', text: SWAP_TEXT.Pick, cancelOnly: true, onCancel: cancel });
+  }
+
+  // The page is washed out around the block and its look-alikes
+  function showVeil() {
+    const rects = [state.swapping.el, ...state.swapping.partners].map((node) => node.getBoundingClientRect());
+    const veil = part(UI_PART.Veil);
+    veil.style.clipPath = veilPath({ width: win.innerWidth, height: win.innerHeight }, rects);
+    veil.style.display = DISPLAY.Block;
   }
 
   // Look-alikes can be nested; the innermost one under the pointer is meant, and it comes last in page order
@@ -537,6 +551,7 @@ function attach(doc, host) {
   function showSwapPartner(node) {
     const partner = swapPartnerAt(node);
     if (!partner) return hideBox(UI_PART.HoverBox);
+    part(UI_PART.HoverBox).classList.add(SWAP_BOX_CLASS);
     showBox(UI_PART.HoverBox, partner);
   }
 
