@@ -8,13 +8,31 @@ function classKey(el) {
   return [...el.classList].sort().join(' ');
 }
 
+// Deep enough to tell a card from a button, shallow enough that one extra paragraph deep inside does not matter
+const SKELETON_DEPTH = 3;
+
+/** The tags of an element and its descendants, ignoring classes, so blocks built from one template read the same. */
+function skeleton(el, depth = SKELETON_DEPTH) {
+  if (depth === 0) return el.tagName;
+  return `${el.tagName}[${[...el.children].map((child) => skeleton(child, depth - 1)).join(',')}]`;
+}
+
+function sharesClass(a, b) {
+  const names = new Set(b.classList);
+  return [...a.classList].some((name) => names.has(name));
+}
+
 /**
- * Whether two blocks look alike: the same tag and the same classes. Blocks without classes only look alike as
- * siblings, since every plain `div` of a page would otherwise be on offer.
+ * Whether two blocks look alike: the same tag and the same classes, or the same tag and the same build with
+ * differing classes (a modifier such as `card-2`) when they share a class or a parent. Blocks without classes only
+ * look alike as siblings, since every plain `div` of a page would otherwise be on offer.
  */
 function looksAlike(a, b) {
-  if (a.tagName !== b.tagName || classKey(a) !== classKey(b)) return false;
-  return a.classList.length > 0 || a.parentElement === b.parentElement;
+  if (a.tagName !== b.tagName) return false;
+  const sameParent = a.parentElement === b.parentElement;
+  if (classKey(a) === classKey(b)) return a.classList.length > 0 || sameParent;
+  if (!sameParent && !sharesClass(a, b)) return false;
+  return skeleton(a) === skeleton(b);
 }
 
 /** Whether `other` can trade places with `el`: another look-alike of the page's own, apart from it. */

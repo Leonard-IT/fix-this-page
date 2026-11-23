@@ -34,9 +34,11 @@ function page(...children) {
 
 describe('looksAlike', () => {
   it('matches the same tag with the same classes, in any order', () => {
-    page();
-    assert.equal(looksAlike(node('div', ['card', 'big']), node('div', ['big', 'card'])), true);
-    assert.equal(looksAlike(node('div', ['card']), node('div', ['card', 'big'])), false);
+    const [a, b, c, d] = [node('div', ['card', 'big']), node('div', ['big', 'card']), node('div', ['card']), node('div', ['x'])];
+    page(node('p', [], [a]), node('p', [], [b]), node('p', [], [c]), node('p', [], [d]));
+    assert.equal(looksAlike(a, b), true);
+    assert.equal(looksAlike(a, c), true, 'shares a class and has the same build');
+    assert.equal(looksAlike(c, d), false, 'other parent, no shared class');
     assert.equal(looksAlike(node('div', ['card']), node('li', ['card'])), false);
   });
 
@@ -47,6 +49,33 @@ describe('looksAlike', () => {
 
     assert.equal(looksAlike(a, b), true);
     assert.equal(looksAlike(a, other), false);
+  });
+});
+
+describe('looksAlike with differing classes', () => {
+  const item = (modifier) => node('article', ['item', modifier], [node('div', ['top'], [node('h3')]), node('div', ['bot'])]);
+
+  it('matches siblings of the same build that differ in a modifier class', () => {
+    const [a, b] = [item('i-0'), item('i-1')];
+    page(node('div', ['grid'], [a, b]));
+
+    assert.equal(looksAlike(a, b), true);
+  });
+
+  it('matches blocks of the same build in different parents when they share a class', () => {
+    const [a, b] = [item('i-0'), item('i-1')];
+    page(node('div', [], [a]), node('div', [], [b]));
+
+    assert.equal(looksAlike(a, b), true);
+  });
+
+  it('refuses a different build, or a different parent without a shared class', () => {
+    const [a, other] = [item('i-0'), node('article', ['item', 'i-1'], [node('p')])];
+    const stranger = node('article', ['x'], [node('div', ['top'], [node('h3')]), node('div', ['bot'])]);
+    page(node('div', [], [a, other]), node('div', [], [stranger]));
+
+    assert.equal(looksAlike(a, other), false);
+    assert.equal(looksAlike(a, stranger), false);
   });
 });
 
