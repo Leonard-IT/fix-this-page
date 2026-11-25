@@ -1,6 +1,7 @@
 name: Release
 
-# Publishes the package to npm when a version tag such as v0.2.0 is pushed.
+# Stages the package on npm when a version tag such as v0.2.0 is pushed. Nothing goes live until a maintainer approves it with 2FA
+# (npm stage list fix-this-page, then npm stage approve <stage-id>, or the Staged Packages tab on npmjs.com).
 # Needs an npm access token in the repository secret NPM_TOKEN, and "private" removed from packages/fix-this-page/package.json.
 on:
   push:
@@ -20,6 +21,8 @@ jobs:
           node-version: 22
           cache: npm
           registry-url: https://registry.npmjs.org
+      # npm stage needs a newer npm than the one that ships with Node 22
+      - run: npm install -g npm@latest
       - run: npm ci
       - name: Tag matches package version
         run: |
@@ -30,6 +33,6 @@ jobs:
           fi
       - run: npm test
       # prepublishOnly builds and tests once more
-      - run: npm publish --workspace fix-this-page --access public --provenance
+      - run: npm stage publish --workspace fix-this-page --access public --provenance
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

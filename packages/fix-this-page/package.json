@@ -1,7 +1,6 @@
 {
   "name": "fix-this-page",
   "version": "0.1.0",
-  "private": true,
   "description": "Let people give feedback on your site by pointing at things and changing them directly; you get it as a prompt for your AI coding agent. The feedback stays in their browser.",
   "license": "MIT",
   "homepage": "https://fixthis.page",
