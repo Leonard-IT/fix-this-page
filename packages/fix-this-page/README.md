@@ -15,15 +15,15 @@ The overlay is two files that belong together: `fixthis.js` (the small loader yo
 ### Option A: from a CDN (least work)
 
 ```html
-<script defer src="https://cdn.jsdelivr.net/npm/fix-this-page@0.1.0/dist/fixthis.js"
+<script defer src="https://cdn.jsdelivr.net/npm/fix-this-page@0.1.1/dist/fixthis.js"
         integrity="sha384-XUVi9vFisqj1N/RcyyfM/yWbGFcdkB2C+JF4rmYO4R7Cz2frXD1WZmDIG0htgxQG"
         crossorigin="anonymous"></script>
 ```
 
-Use the full path to `dist/fixthis.js`, not the short `…/npm/fix-this-page@0.1.0` URL. The `integrity` value above belongs to version 0.1.0. For another version, hash the file you load and put `sha384-` in front of the result:
+Use the full path to `dist/fixthis.js`, not the short `…/npm/fix-this-page@0.1.1` URL. The `integrity` value above belongs to version 0.1.0. For another version, hash the file you load and put `sha384-` in front of the result:
 
 ```bash
-curl -sL https://cdn.jsdelivr.net/npm/fix-this-page@0.1.0/dist/fixthis.js | openssl dgst -sha384 -binary | openssl base64 -A
+curl -sL https://cdn.jsdelivr.net/npm/fix-this-page@0.1.1/dist/fixthis.js | openssl dgst -sha384 -binary | openssl base64 -A
 ```
 
 ### Option B: copy the files from the npm package

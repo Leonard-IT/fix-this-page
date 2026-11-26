@@ -5,7 +5,7 @@ Let people give feedback on your website by pointing at things and changing them
 It is one script you add to your own site. It stays out of the way until someone opens a page with `?fix` in the address, and nothing is sent anywhere: the feedback stays in the browser of whoever gives it, until they copy a link, copy the prompt or save a file.
 
 ```html
-<script defer src="https://cdn.jsdelivr.net/npm/fix-this-page@0.1.0/dist/fixthis.js"
+<script defer src="https://cdn.jsdelivr.net/npm/fix-this-page@0.1.1/dist/fixthis.js"
         integrity="sha384-XUVi9vFisqj1N/RcyyfM/yWbGFcdkB2C+JF4rmYO4R7Cz2frXD1WZmDIG0htgxQG"
         crossorigin="anonymous"></script>
 ```

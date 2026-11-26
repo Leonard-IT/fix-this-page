@@ -6,6 +6,12 @@ Changes to the Page Change Format in `spec/`, the `fix-this-page/core/*` exports
 
 ## [Unreleased]
 
+## [0.1.1] - 2026-11-26
+
+### Changed
+
+- The README on npm shows the CDN snippet with `defer`, so the page can render while the loader downloads, and with the real `integrity` hash of the version, with a command to compute it for another version. The code in `dist` is the same as in 0.1.0.
+
 ## [0.1.0] - 2026-11-25
 
 First version: the overlay (loader and full overlay), the annotation layer, the Page Change Format writer, the prompt renderer, and the Page Change Format specification.
