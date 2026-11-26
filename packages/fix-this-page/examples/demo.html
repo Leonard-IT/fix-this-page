@@ -3,15 +3,39 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Overlay demo · fixthis</title>
+<title>Dandelion &amp; Sons · Gardening since 1987</title>
 <style>
-  body { font-family: system-ui, sans-serif; max-width: 760px; margin: 40px auto; padding: 0 16px; line-height: 1.5; color: #1d232a; }
-  nav a { margin-right: 12px; }
-  .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; }
-  .card { border: 1px solid #d0d7de; border-radius: 8px; padding: 12px; }
+  :root { --green: #2f6b3a; --leaf: #e7f1e4; --sun: #f4c542; --ink: #1d232a; --line: #d3dccf; }
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: system-ui, sans-serif; line-height: 1.55; color: var(--ink); background: #fbfcf8; }
+  .wrap { max-width: 960px; margin: 0 auto; padding: 0 16px; }
+  header { background: var(--green); color: #fff; }
+  header .wrap { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 24px; padding-top: 14px; padding-bottom: 14px; }
+  .logo { font-size: 1.3rem; font-weight: 800; margin-right: auto; color: #fff; text-decoration: none; }
+  nav { display: flex; flex-wrap: wrap; gap: 4px 16px; align-items: center; }
+  nav a { color: #fff; }
+  #clicks { font-size: .8rem; background: rgba(0,0,0,.25); padding: 2px 10px; border-radius: 999px; }
+  main { padding: 32px 0; min-height: 60vh; }
+  h1 { font-size: 2.2rem; line-height: 1.15; margin: 0 0 12px; }
+  h2 { margin: 36px 0 12px; }
+  .hero { background: var(--leaf); border: 1px solid var(--line); border-radius: 12px; padding: 32px 24px; margin-bottom: 8px; }
+  .intro { font-size: 1.2rem; max-width: 36em; }
+  .button { display: inline-block; background: var(--sun); color: var(--ink); font-weight: 700; padding: 10px 18px; border-radius: 8px; text-decoration: none; }
+  .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 16px; }
+  .card { background: #fff; border: 1px solid var(--line); border-radius: 10px; padding: 16px; }
   .card h3 { margin: 0 0 4px; }
-  #clicks { color: #8a5a00; }
+  .card .price { color: var(--green); font-weight: 700; }
+  .card small { color: #5b6670; }
+  blockquote { margin: 0; padding: 12px 16px; background: #fff; border-left: 4px solid var(--sun); border-radius: 0 8px 8px 0; }
+  blockquote cite { display: block; margin-top: 6px; font-size: .9rem; color: #5b6670; }
+  form { display: grid; gap: 10px; max-width: 420px; }
+  label { display: grid; gap: 4px; font-weight: 600; }
+  input, textarea { font: inherit; padding: 8px; border: 1px solid #aab5a5; border-radius: 6px; }
+  footer { border-top: 1px solid var(--line); padding: 20px 0 32px; font-size: .9rem; color: #5b6670; }
+  footer .wrap { display: flex; flex-wrap: wrap; gap: 8px 24px; justify-content: space-between; align-items: center; }
+  footer button { font: inherit; }
 </style>
+<script defer src="../dist/fixthis.js"></script>
 </head>
 <body>
 <!--
@@ -20,24 +44,62 @@
   it adds fixthis-overlay.js from the same folder once the overlay is switched on.
   The page acts like a small app on purpose: it counts clicks, changes pages with pushState, and re-renders a section.
 -->
-<nav>
-  <a href="/home" data-route="/home">Home</a>
-  <a href="/team" data-route="/team">Team</a>
-  <span id="clicks">Site click handler ran 0 times</span>
-</nav>
-<main id="app"></main>
-<p><button type="button" id="rerender">Re-render the page (like a framework would)</button></p>
+<header>
+  <div class="wrap">
+    <a class="logo" href="/home" data-route="/home">🌼 Dandelion &amp; Sons</a>
+    <nav>
+      <a href="/home" data-route="/home">Home</a>
+      <a href="/services" data-route="/services">Services</a>
+      <a href="/team" data-route="/team">Team</a>
+      <a href="/contact" data-route="/contact">Contact</a>
+      <span id="clicks">Site click handler ran 0 times</span>
+    </nav>
+  </div>
+</header>
+<div class="wrap"><main id="app"></main></div>
+<footer>
+  <div class="wrap">
+    <span>© 1987 Dandelion &amp; Sons. Not responsible for gnomes that go missing overnight.</span>
+    <button type="button" id="rerender">Re-render the page (like a framework would)</button>
+  </div>
+</footer>
 
 <script>
   const ROUTES = {
-    '/home': `<h1>Acme gardening</h1>
-      <p class="intro">We keep <b>your garden</b> green all year round.</p>
-      <p><a href="/contact">Contact us</a></p>`,
+    '/home': `<section class="hero">
+        <h1>Dandelion &amp; Sons</h1>
+        <p class="intro">We keep <b>your garden</b> green all year round. Mostly. Some of it. The bits we can reach.</p>
+        <p><a class="button" href="/contact" data-route="/contact">Get a free quote</a></p>
+      </section>
+      <h2>Why our customers love us</h2>
+      <section class="cards">
+        <blockquote>“My lawn has never been this straight. It is also slightly shorter than I asked for.”<cite>Mrs. Patel, Rosewood Lane</cite></blockquote>
+        <blockquote>“They arrived on time, which is unusual for a plant-based business.”<cite>Henk, owner of a very confused hedge</cite></blockquote>
+        <blockquote>“Five stars. The gnome is back.”<cite>Anonymous</cite></blockquote>
+      </section>`,
+    '/services': `<h1>What we do</h1>
+      <p class="intro">Every job comes with a complimentary cup of tea. The tea is for us.</p>
+      <section class="cards">
+        <div class="card"><h3>Lawn mowing</h3><p class="price">From €25</p><p>We cut the grass. Then we cut it again, to be sure.</p></div>
+        <div class="card"><h3>Hedge sculpting</h3><p class="price">From €60</p><p>Swans, spheres, or something abstract. <small>Hedge may disagree.</small></p></div>
+        <div class="card"><h3>Tree whispering</h3><p class="price">€80 per hour</p><p>Bob talks to your trees. They mostly listen.</p></div>
+        <div class="card"><h3>Weed negotiations</h3><p class="price">Price on request</p><p>We ask them nicely to leave. Then we ask less nicely.</p></div>
+      </section>`,
     '/team': `<h1>Our team</h1>
       <section class="cards">
-        <div class="card"><h3>Anna</h3><p>Garden designer</p></div>
-        <div class="card"><h3>Bob</h3><p>Tree specialist</p></div>
+        <div class="card"><h3>Anna</h3><p>Garden designer</p><p><small>Has opinions about tulips.</small></p></div>
+        <div class="card"><h3>Bob</h3><p>Tree specialist</p><p><small>Afraid of squirrels since 2011.</small></p></div>
+        <div class="card"><h3>Dennis</h3><p>Head of compost</p><p><small>Smells like success.</small></p></div>
+        <div class="card"><h3>Gerald</h3><p>Chief gnome officer</p><p><small>Does not move. Does not blink.</small></p></div>
       </section>`,
+    '/contact': `<h1>Contact us</h1>
+      <p class="intro">Tell us about your garden. We promise to act surprised.</p>
+      <form onsubmit="return false">
+        <label>Your name <input type="text" placeholder="Jan de Tuinman"></label>
+        <label>What is wrong with your garden? <textarea rows="4" placeholder="It is green. This worries me."></textarea></label>
+        <button type="submit" class="button">Send, and hope for the best</button>
+      </form>
+      <p><small>Prefer the phone? Call 0800 - WEEDS - 4U. Please do not call after sunset; the plants are sleeping.</small></p>`,
   };
   let clicks = 0;
   const currentRoute = () => (ROUTES[location.pathname] ? location.pathname : '/home');
@@ -56,6 +118,5 @@
   document.getElementById('rerender').addEventListener('click', render);
   render();
 </script>
-<script src="../dist/fixthis.js"></script>
 </body>
 </html>
