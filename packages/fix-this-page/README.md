@@ -15,11 +15,16 @@ The overlay is two files that belong together: `fixthis.js` (the small loader yo
 ### Option A: from a CDN (least work)
 
 ```html
-<script src="https://cdn.jsdelivr.net/npm/fix-this-page@0.1.0/dist/fixthis.js"
-        integrity="sha384-…" crossorigin="anonymous"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/fix-this-page@0.1.0/dist/fixthis.js"
+        integrity="sha384-XUVi9vFisqj1N/RcyyfM/yWbGFcdkB2C+JF4rmYO4R7Cz2frXD1WZmDIG0htgxQG"
+        crossorigin="anonymous"></script>
 ```
 
-Use the full path to `dist/fixthis.js`, not the short `…/npm/fix-this-page@0.1.0` URL. Take the `integrity` value from the jsDelivr page of the version you use.
+Use the full path to `dist/fixthis.js`, not the short `…/npm/fix-this-page@0.1.0` URL. The `integrity` value above belongs to version 0.1.0. For another version, hash the file you load and put `sha384-` in front of the result:
+
+```bash
+curl -sL https://cdn.jsdelivr.net/npm/fix-this-page@0.1.0/dist/fixthis.js | openssl dgst -sha384 -binary | openssl base64 -A
+```
 
 ### Option B: copy the files from the npm package
 
@@ -77,10 +82,10 @@ You may use a subfolder, such as `/tools/`, if the tag points there. Keep both f
 Add it to every page where feedback should be possible, in the `<head>` or just before `</body>`:
 
 ```html
-<script src="/fixthis.js"></script>
+<script defer src="/fixthis.js"></script>
 ```
 
-Use a plain script tag: no `type="module"`, and keep the file name `fixthis.js`. In a framework, put the tag in the shared layout or the root HTML template (`index.html`, `layout`, `_document`, …), and make sure it is not removed in production builds.
+Use a classic script tag with `defer` (it lets the page render while the script downloads): no `type="module"`, and keep the file name `fixthis.js`. In a framework, put the tag in the shared layout or the root HTML template (`index.html`, `layout`, `_document`, …), and make sure it is not removed in production builds.
 
 ### Run your site locally with npx
 

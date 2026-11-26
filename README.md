@@ -5,8 +5,15 @@ Let people give feedback on your website by pointing at things and changing them
 It is one script you add to your own site. It stays out of the way until someone opens a page with `?fix` in the address, and nothing is sent anywhere: the feedback stays in the browser of whoever gives it, until they copy a link, copy the prompt or save a file.
 
 ```html
-<script src="https://cdn.jsdelivr.net/npm/fix-this-page@0.1.0/dist/fixthis.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/fix-this-page@0.1.0/dist/fixthis.js"
+        integrity="sha384-XUVi9vFisqj1N/RcyyfM/yWbGFcdkB2C+JF4rmYO4R7Cz2frXD1WZmDIG0htgxQG"
+        crossorigin="anonymous"></script>
 ```
+
+<p>
+  <img src="docs/toolbar_preview.png" alt="The toolbar over a selected block of a page, with buttons to comment, edit text, duplicate, move, swap, delete and select the parent" height="300">
+  <img src="docs/doc_preview.png" alt="The fix-this-page panel listing three feedback items, with buttons to copy the feedback as a prompt for an AI tool, copy a link, or save it as a file" height="300">
+</p>
 
 See the [package README](packages/fix-this-page/README.md) for installation, how feedback is given and shared, the limits and the security notes.
 

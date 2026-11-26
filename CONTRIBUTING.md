@@ -46,23 +46,60 @@ Follow [docs/CODING_GUIDELINES.md](docs/CODING_GUIDELINES.md) and the project pr
 
 ## Releasing (maintainers)
 
-The package is published to npm as `fix-this-page`. The workflow in `.github/workflows/release.yml` publishes when a version tag is pushed.
+The package is published to npm as `fix-this-page`. The workflow in `.github/workflows/release.yml` stages the package on npm when a version tag is pushed; it goes live once a maintainer approves it with 2FA. A published version can never be replaced, so work through the list in order and do not skip the checks.
 
-One-time setup before the first release:
+### Where the version appears
 
-- Remove `"private": true` from `packages/fix-this-page/package.json`. Until then `npm publish` refuses, on purpose.
-- Add an npm access token that may publish this package as the repository secret `NPM_TOKEN`.
+A release touches every place below. Steps 3 to 5 and 7 of the list cover them.
 
-For each release:
+| Place | What changes |
+| --- | --- |
+| `packages/fix-this-page/package.json` and `package-lock.json` | `version` (set by `npm version`) |
+| `CHANGELOG.md` | new heading with the date; `[Unreleased]` stays, empty |
+| `README.md` | CDN snippet: version in the URL and the `integrity` hash |
+| `packages/fix-this-page/README.md` | CDN snippet (version and hash), the sentence about the short URL, and the `curl` example for other versions |
 
-1. Make sure `main` is green in CI.
-2. Move the entries under `[Unreleased]` in [CHANGELOG.md](CHANGELOG.md) to a new version heading with today's date.
-3. Set the version: `npm version <patch|minor|major> --workspace fix-this-page --no-git-tag-version`. Update the pinned version in the CDN snippet in [README.md](README.md) to match.
-4. Check what goes in the package: `npm pack --dry-run --workspace fix-this-page`. Expect the two `dist/*.js` files, their `.map` files, `src/core` and the licence.
-5. Commit ("Release 0.2.0"), tag it (`git tag v0.2.0`) and push both (`git push origin main v0.2.0`). The tag must equal `v` plus the package version, or the workflow stops.
-6. After the workflow succeeds, open `https://cdn.jsdelivr.net/npm/fix-this-page@0.2.0/dist/fixthis.js` and create a GitHub release from the tag.
+### Authentication
 
-A published version cannot be replaced. If it is wrong, publish a fixed version and run `npm deprecate` on the bad one.
+The workflow signs in with the repository secret `NPM_TOKEN`, a granular npm token that may stage this package. Once the trusted publisher is configured on npmjs.com (package settings; user `Leonard-IT`, repository `fix-this-page`, workflow `release.yml`), delete the token and its secret and remove the `NODE_AUTH_TOKEN` line from the workflow. Staging then needs no stored secret. Approving a staged package always asks for 2FA.
+
+### Checklist for each release
+
+Before tagging:
+
+1. Be on `main`, up to date with `origin`, with a clean working tree, and make sure `main` is green in CI. You need Node.js 22 or newer.
+2. Pick the version number ([Semantic Versioning](https://semver.org)). While the version is 0.x, a breaking change raises the minor version; what counts as breaking is written at the top of [CHANGELOG.md](CHANGELOG.md).
+3. In [CHANGELOG.md](CHANGELOG.md), move the entries under `[Unreleased]` to a new heading `## [x.y.z] - YYYY-MM-DD` with today's date. Leave an empty `## [Unreleased]` above it.
+4. Set the version: `npm version <patch|minor|major> --workspace fix-this-page --no-git-tag-version`. This updates `package.json` and the lock file.
+5. Update the pinned version in the CDN snippet of [README.md](README.md) and in three places in [packages/fix-this-page/README.md](packages/fix-this-page/README.md): the snippet, the sentence after it that names the short URL, and the `curl` example. Check with `grep -rn "fix-this-page@" README.md packages/fix-this-page/README.md`: no old version may be left.
+6. Run `npm ci`, `npm test` and `npm run build`. All three must pass.
+7. Update the `integrity` hash in both CDN snippets. Every version has a new hash, and a stale one makes browsers refuse the script. Get it from the file you just built and put `sha384-` in front:
+
+   ```bash
+   openssl dgst -sha384 -binary packages/fix-this-page/dist/fixthis.js | openssl base64 -A
+   ```
+
+   The build is reproducible, so this equals the hash of the file that gets published. Step 12 checks that.
+8. Check what goes in the package: `npm pack --dry-run --workspace fix-this-page`. Expect the two `dist/*.js` files, their `.map` files, `src/core`, the licence and the README, nothing else. Then, in `packages/fix-this-page`, run `npx serve .` and open `/examples/demo.html?fix`: the overlay must start.
+9. Commit with the message `Release x.y.z`.
+10. Tag it and push both: `git tag vx.y.z`, then `git push origin main vx.y.z`. The tag must equal `v` plus the package version, or the workflow stops. Watch the Release workflow in the Actions tab until it succeeds.
+11. Open the staged package (the Staged Packages tab on npmjs.com, or `npm stage list fix-this-page`), check its contents and approve it with 2FA (`npm stage approve <stage-id>`). Only now does it go live.
+
+After publishing:
+
+12. Check the result:
+    - The npm page `https://www.npmjs.com/package/fix-this-page` shows the new version, the README and the provenance badge.
+    - `https://cdn.jsdelivr.net/npm/fix-this-page@x.y.z/dist/fixthis.js` and `.../dist/fixthis-overlay.js` both load.
+    - The hash of the CDN file equals the one in the READMEs: `curl -sL https://cdn.jsdelivr.net/npm/fix-this-page@x.y.z/dist/fixthis.js | openssl dgst -sha384 -binary | openssl base64 -A`.
+    - In an empty folder, `npm install fix-this-page` works and `fix-this-page/core/pcf` imports.
+13. Create a GitHub release from the tag, with the changelog entry as its text.
+14. Update the hosted site: see "Seeing your change in the hosted editor" above (`npm update fix-this-page`, then `npm run deploy` in the `fixthis.page` repository).
+
+### If something goes wrong
+
+- **The workflow fails before staging:** fix the cause, delete the tag (`git push origin :refs/tags/vx.y.z` and `git tag -d vx.y.z`), and tag again.
+- **A staged package is wrong:** reject it in the Staged Packages tab, delete the tag as above, fix it and tag again.
+- **A published version is wrong:** you cannot replace it. Publish a fixed version (a patch) and run `npm deprecate fix-this-page@x.y.z "reason"` on the bad one. Within 72 hours, `npm unpublish` is possible, but only when nobody depends on the package.
 
 ## Licence
 
